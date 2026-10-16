@@ -1,0 +1,207 @@
+% !TEX root = main.tex
+% !TEX program = latexmk
+% !TEX TS-program = latexmk
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+
+\geometry{verbose,tmargin=3cm,bmargin=3.2cm,lmargin=2.4cm,rmargin=2.4cm}
+\linespread{1.0}
+
+\newif\ifjmlrformat
+\jmlrformatfalse
+
+
+
+% The following packages can be found on http:\\www.ctan.org
+%\usepackage{graphics} % for pdf, bitmapped graphics files
+%\usepackage{epsfig} % for postscript graphics files
+%\usepackage{mathptmx} % assumes new font selection scheme installed
+%\usepackage{times} % assumes new font selection scheme installed
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{euscript}
+\usepackage{pifont}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+\renewcommand{\algorithmiccomment}[1]{\hfill$\triangleright$ #1}
+\makeatletter
+\let\NAT@parse\undefined
+\makeatother
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+% Adaptive project paths: works when compiling either from the project root or
+% from the cdc2026_template directory.
+\newcommand{\projectbibfile}{}
+\newcommand{\projectstructuralbibfile}{}
+\newcommand{\projectfigurepath}{}
+\newcommand{\projectappendixpath}{}
+\IfFileExists{tools/shared.tex}{%
+  \input{tools/shared}%
+  \renewcommand{\projectbibfile}{tools/refers}%
+  \renewcommand{\projectstructuralbibfile}{tools/dca_structural_complexity_refs}%
+  \renewcommand{\projectfigurepath}{figure}%
+  \renewcommand{\projectappendixpath}{appendix}%
+}{%
+  \IfFileExists{../tools/shared.tex}{%
+    \input{../tools/shared}%
+    \renewcommand{\projectbibfile}{../tools/refers}%
+    \renewcommand{\projectstructuralbibfile}{../tools/dca_structural_complexity_refs}%
+    \renewcommand{\projectfigurepath}{../figure}%
+    \renewcommand{\projectappendixpath}{appendix}%
+  }{%
+    \PackageError{cdc2026-template}{Cannot find tools/shared.tex}{Compile from the project root or from cdc2026_template.}%
+  }%
+}
+\IfFileExists{\projectbibfile.bib}{}{%
+  \PackageError{cdc2026-template}{Cannot find \projectbibfile.bib}{Check the adaptive bibliography path.}%
+}
+\IfFileExists{\projectstructuralbibfile.bib}{}{%
+  \PackageError{cdc2026-template}{Cannot find \projectstructuralbibfile.bib}{Check the adaptive structural bibliography path.}%
+}
+\graphicspath{{figure/}{../figure/}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{condition}{Condition}[section]
+\Crefname{theorem}{Theorem}{Theorems}
+\Crefname{lemma}{Lemma}{Lemmas}
+\Crefname{corollary}{Corollary}{Corollaries}
+\Crefname{proposition}{Proposition}{Propositions}
+\Crefname{definition}{Definition}{Definitions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\Crefname{example}{Example}{Examples}
+\Crefname{remark}{Remark}{Remarks}
+
+\title{\LARGE \bf
+Revisiting DC Optimization: A Unified Notion of Criticality with Optimal Complexity
+}
+
+%\author{ \parbox{3 in}{\centering Huibert Kwakernaak*
+%         \thanks{*Use the $\backslash$thanks command to put information here}\\
+%         Faculty of Electrical Engineering, Mathematics and Computer Science\\
+%         University of Twente\\
+%         7500 AE Enschede, The Netherlands\\
+%         {\tt\small h.kwakernaak@autsubmit.com}}
+%         \hspace*{ 0.5 in}
+%         \parbox{3 in}{ \centering Pradeep Misra**
+%         \thanks{**The footnote marks may be inserted manually}\\
+%        Department of Electrical Engineering \\
+%         Wright State University\\
+%         Dayton, OH 45435, USA\\
+%         {\tt\small pmisra@cs.wright.edu}}
+%}
+
+\ifjmlrformat
+\author{\name Luxuan Li \email luxuanli@buaa.edu.cn \\
+       \addr School of Mathematical Sciences\\
+       Beihang University\\
+       Beijing 100191, China
+       \AND
+       \name Chunfeng Cui \email chunfengcui@buaa.edu.cn \\
+       \addr School of Mathematical Sciences\\
+       Beihang University\\
+       Beijing 100191, China
+       \AND
+       \name Xiao Wang \email wangx936@mail.sysu.edu.cn \\
+       \addr School of Computer Science and Engineering\\
+       Sun Yat-sen University\\
+       Guangzhou 510006, China}
+\else
+\author{
+       Luxuan Li\\
+       School of Mathematical Sciences\\
+       Beihang University\\
+       Beijing 100191, China\\
+       \texttt{luxuanli@buaa.edu.cn}
+       \and
+       Chunfeng Cui\\
+       School of Mathematical Sciences\\
+       Beihang University\\
+       Beijing 100191, China\\
+       \texttt{chunfengcui@buaa.edu.cn}
+       \and
+       Xiao Wang\\
+       School of Computer Science and Engineering\\
+       Sun Yat-sen University\\
+       Guangzhou 510006, China\\
+       \texttt{wangx936@mail.sysu.edu.cn}
+       }
+\fi
+
+
+\begin{document}
+
+
+
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+In this paper, we study a general class of nonconvex DC constrained problems , where the feasible set is possibly nonconvex, and the concave part of the DC objective is allowed to be nonsmooth. The fundamental challenge lies in maintaining feasibility for nonconvex constraints while achieving favorable oracle complexity.
+
+\ifjmlrformat
+\begin{keywords}
+Nonsmooth optimization, DC optimization, smoothing approximation, momentum, variance reduction, oracle complexity,
+\end{keywords}
+\else
+\noindent\textbf{Keywords:} Nonsmooth nonconvex optimization,  constrained optimization, DC optimization, penalty methods, smoothing approximation, momentum, oracle complexity.
+\fi
+
+
+\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{sections/introduction}
+\input{sections/preliminaries}
+\input{sections/criticality}
+\input{sections/deterministic_dca}
+\input{sections/stochastic_dca}
+\input{sections/constrained_dc}
+\input{sections/conclusion}
+
+\appendix
+\input{\projectappendixpath/Finite_Time_Barriers_of_DC}
+\input{\projectappendixpath/lowerbound.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{ACKNOWLEDGMENTS}
+
+The authors gratefully acknowledge the contribution of National Research Organization and reviewers' comments.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+References are important to the reader; therefore, each citation must be complete and correct. If at all possible, references should be commonly available publications.
+
+\bibliographystyle{plainnat}
+\bibliography{\projectbibfile,\projectstructuralbibfile}
+
+\end{document}

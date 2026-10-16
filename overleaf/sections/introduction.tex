@@ -1,0 +1,234 @@
+\section{INTRODUCTION}
+In this paper, we study a class of nonsmooth nonconvex constrained
+optimization problems formulated as
+\begin{equation}
+\tag{{\bf P}}
+\label{prob:main}
+\begin{alignedat}{3}
+   \min\limits_{\bx \in \RR^n} \quad
+      & F(\bx) &&:= \phi(\bx) - g(\bx),
+%       \\
+%    \text{s.t.} \quad
+%       & \bc_{\calE}(\bx) &&= \zero, \\
+%       & \bc_{\calI}(\bx) &&\leq \zero ,
+\end{alignedat}
+\end{equation}
+where the objective $F = \phi - g$ has a \emph{difference-of-convex}
+(DC) structure: $\phi:\RR^n\to\RR\cup\{+\infty\}$ and
+$g:\RR^n\to\RR\cup\{+\infty\}$ are proper closed convex functions, and
+$g$ is allowed to be nonsmooth, so that $F$ is in general both
+nonsmooth and nonconvex. 
+% The constraint mappings
+% $\bc_{\calE}:\RR^n\to\RR^{m_{\calE}}$ and
+% $\bc_{\calI}:\RR^n\to\RR^{m_{\calI}}$ are continuously differentiable
+% and define a nonempty feasible set
+% $\calX = \{\bx \in \RR^n : \bc_{\calE}(\bx) = \zero,\
+% \bc_{\calI}(\bx) \le \zero\}$.
+
+Two settings motivate our study of Problem~\eqref{prob:main}. The first is deterministic constrained DC programming, in which both
+$\phi$ and $g$ can be evaluated exactly. DC functions form a vector
+space and constitute a remarkably rich subclass of locally Lipschitz
+nonconvex functions \citep{Zhang-2020-Complexity,kong2024cost,davis2022gradient}; the formulation subsumes smooth nonconvex minimization ($g \equiv 0$) as a
+trivial instance and covers a broad spectrum of classical
+applications, including nonconvex quadratic programming
+\citep{lethi1997solving,lethi1998branch}, convex--concave programming
+\citep{yuille2003concave,shen2016disciplined}, kernel selection \citep{argyriou2006dc},
+and bilevel programming \citep{lethi2009dc}. While the unconstrained DC
+objective is by now well understood, the nonlinear constraints
+$\bc_{\calE}$ and $\bc_{\calI}$, which arise naturally from
+structural or resource requirements such as energy budgets in deep
+network compression \citep{yang2019ecc,chen2018constraint} and safety
+constraints in control \citep{paternain2019constrained},introduce
+severe geometric complications of their own.
+
+A second motivation for \eqref{prob:main} is regularized empirical risk minimization in large-scale machine learning. The DC structure of the objective naturally captures the combination of a data-fitting risk and a nonconvex regularizer. Specifically, any smooth nonconvex loss can be reformulated as a DC function by adding and subtracting a strongly convex quadratic term. Moreover, popular nonconvex regularizers such as the capped-$\ell_1$ penalty \citep{zhang2010analysis} and SCAD \citep{fan2001variable} admit explicit DC decompositions $r = r_{\mathrm{cvx}} - g$. In large-scale training, the data-fitting component in $\phi$ is a
+population risk accessible only through stochastic gradients under
+data sampling, whereas the subtracted component $g$, which collects
+the concave part of the regularizer, remains a fixed deterministic
+function. 
+
+To ground our framework, we provide two concrete motivating examples that can be formulated as instances of Problem~\eqref{prob:main}:
+
+\subsection{Motivating Examples}
+
+\begin{enumerate}
+  \item \textbf{Deterministic DC objective.}
+Losses given by a pointwise minimum of convex functions are
+intrinsically DC, via the identity
+$\min\limits_{k\le K} a_k=\sum_{k=1}^{K}a_k-\max\limits_{k\le K}\sum_{j\ne k}a_j$
+for convex $a_1,\dots,a_K$. For instance, in piecewise-affine
+(clusterwise) regression, each observation is explained by the best of
+$K$ candidate affine models,
+\[
+   \min\limits_{\bw_1,\dots,\bw_K}\ \sum_{i=1}^{N}\,
+   \min\limits_{1\le k\le K}\bigl|y_i-\langle \bw_k,\bx_i\rangle\bigr|,
+\]
+and applying the identity samplewise yields $F=\phi-g$ with
+$\phi(\bw)=\sum_{i,k}|y_i-\langle \bw_k,\bx_i\rangle|$ and
+$g(\bw)=\sum_{i}\max\limits_{k}\sum_{j\ne k}|y_i-\langle \bw_j,\bx_i\rangle|$.
+Both components are convex, piecewise affine, and nonsmooth, with
+subgradients available in closed form.
+
+  \item \textbf{Stochastic nonconvex regularized ERM.}
+  Consider a convex data-fitting loss $\ell$ coupled with a capped-$\ell_1$ penalty:
+  \[
+     \min\limits_{\bx}\ \underbrace{\EE_{\xi}[\ell(\bx,\xi)] + \lambda\|\bx\|_1}_{\phi(\bx)}
+     \;-\;\underbrace{\lambda\sum_i\max\limits\{|x_i|-\theta,0\}}_{g(\bx)}.
+  \]
+  Here, the data-fitting component $\phi$ is a population risk evaluated solely via stochastic gradients, whereas the subtracted penalty $g$ is a fixed, deterministic, and nonsmooth convex function whose subgradients can be computed in closed form.
+\end{enumerate}
+
+\subsection{Related Work}
+\label{subsec:known-and-open}
+
+\paragraph{Non-asymptotic rates for DC optimization.}
+
+Removing differentiability of the subtracted component $g$ has been a
+central theme in DC programming. Recent non-asymptotic analyses have
+made this theme quantitative, but their guarantees are expressed through
+different decomposition-dependent certificates. For DCA and CCCP-type
+methods, rates are usually stated in terms of objective decrease, step
+lengths, or critical-distance proxies under additional smoothness or
+curvature assumptions
+\citep{yurtsever2022cccp,abbaszadehpeivasti2023rate}. Projection-free
+DC methods over compact convex domains instead use Frank--Wolfe-type
+linear minimization gaps \citep{khamaru2018convergence,maskan2025}.
+Stochastic DC methods use critical-distance criteria or one-sided gap
+functions, often with a smooth or variance-reduced stochastic component
+\citep{xu2019stochastic,le2022stochastic,nguyen2025improved}. These
+certificates are value-typed or algorithm-dependent, while the exact DC
+residual
+\[
+    \operatorname{dist}\bigl(\zero,\partial\phi(\bx)-\partial g(\bx)\bigr)
+\]
+is norm-typed and same-point. Passing from a gap bound to a residual
+bound therefore changes units, typically through a square-root relation.
+Existing finite-time results hence do not settle whether exact
+same-point $\epsilon$-criticality is itself attainable for nonsmooth DC
+pairs. The first question is therefore:
+
+\emph{Is $\epsilon$-criticality finite-time attainable in DC
+optimization? If not, does a unified single notion exist that relaxes it while
+remaining both finite-time attainable and sound?}
+
+\paragraph{Non-asymptotic rates for unconstrained nonsmooth nonconvex
+optimization.}
+For general Lipschitz objectives, $\epsilon$-Clarke stationarity is
+unattainable in finite time \citep{Zhang-2020-Complexity}, while the
+structure-blind Goldstein $(\delta,\epsilon)$-stationarity relaxation admits
+$O(\delta^{-1}\epsilon^{-3})$ guarantees
+\citep{Zhang-2020-Complexity,davis2022gradient},
+one $\epsilon$-factor away from the $O(\epsilon^{-2})$ smooth
+benchmark. These results treat the objective as a black box. 
+
+The second question is therefore:
+
+\emph{Under an finite-sum attainable targat of DC
+criticality, can the DC structure be provably exploited to match the
+$O(\epsilon^{-2})$ rate of unconstrained smooth nonconvex
+optimization?}
+
+\paragraph{Constrained nonconvex optimization.}
+The rates above are established either without constraints or over
+simple convex compact sets accessed through projections or linear
+minimization oracles \citep{khamaru2018convergence,maskan2025}; general nonlinear
+constraints are handled by penalty or augmented-Lagrangian schemes
+whose inner solves make the methods double-loop and couple the inner
+accuracy to the outer complexity
+\citep{xie2021complexity,lu2022penalty,yu2021convergence,kanzow2025adaptive}. The third question is:
+
+\emph{can a single-loop method, free of inner solvers and
+backtracking, retain the optimal $O(\epsilon^{-3})$ complexity under general
+nonlinear, possibly nonconvex, constraints? (ALM)}
+
+\subsection{Contributions}
+We tackle the three questions for Problem~\eqref{prob:main} when both components of the DC decomposition may be nonsmooth.  This class is rich enough to cover
+constrained DC programs and nonconvex-regularized empirical risk
+minimization. At first sight, the DC structure makes the search for
+stationary points easier on both sides of the oracle--target ledger:
+the natural target, DC criticality
+$\zero\in\partial\phi(\bx)-\partial g(\bx)$, is strictly weaker than
+Clarke stationarity, and the natural oracle, returning values and
+subgradients of $\phi$ and $g$ separately, is strictly stronger than
+a Clarke subgradient oracle. Surprisingly, even with a weaker target
+and a stronger oracle, finding an $\epsilon$-critical point, i.e., a
+point $\bar\bx$ with
+$\operatorname{dist}(\zero,\partial\phi(\bar\bx)-\partial g(\bar\bx))
+\le\epsilon$, is intractable. In other words, no algorithm
+interacting with the component-wise DC oracle can guarantee an
+$\epsilon$-critical point among its queried iterates within a finite
+number of oracle calls.This intractability suggests that, to obtain meaningful
+non-asymptotic results for DC problems, we need to refine the notion
+of criticality. We then introduce such a unified notion and base our analysis on
+it, leading to the following main contributions:
+
+\begin{itemize}
+\item We show that a traditional $\epsilon$-critical point cannot be
+obtained in finite time, even under the strong component-wise DC
+oracle, returning values and subgradients of $\phi$ and $g$
+separately.
+
+
+\item We study $(\delta_\phi,\delta_g,\epsilon)$-critical points
+(\Cref{def:delta-eps-critical}), which unify existing relaxations of
+DC criticality.For smooth DC functions, this notion reduces to the usual
+$\epsilon$-stationarity by choosing \(\delta_\phi=O(\epsilon^2/L_\phi)\) and \(\delta_g=O(\epsilon^2/L_g)\).
+
+\item For unconstrained DC optimization, we show that proximal DCA returns a \((0,\delta_g,\epsilon)\)-critical point within
+\(\mathcal O(\max\limits\{\epsilon^{-2},\delta_g^{-1}\})\) subproblem solves.
+When \(g\) is additionally \(L_g\)-smooth, one may take
+\(\delta_g=\mathcal O(\epsilon^2/L_g)\), so that the two-sided certificate
+collapses to the standard \(\mathcal O(\epsilon^{-2})\) guarantee for
+\(\epsilon\)-stationarity. \blue{Moreover, composing this certificate with an
+inner solver of per-subproblem cost \(T_{\rm sub}(\omega)\) at accuracy
+\[
+\omega=
+\mathcal O\!\left(
+\min\limits\left\{
+\eta\epsilon^2,\,
+\frac{\delta_\phi^2}{\eta G_\phi^2},\,
+\frac{\delta_g^2}{\eta G_g^2}
+\right\}
+\right)
+\]
+yields a \((\delta_\phi,\delta_g,\mathcal O(\epsilon))\)-critical point with total
+inner-iteration complexity
+\[
+\mathcal O\!\left(
+\max\limits\left\{
+\frac{\Delta}{\eta\epsilon^2},\,
+\frac{\eta\Delta G_g^2}{\delta_g^2}
+\right\}
+\cdot T_{\rm sub}(\omega)
+\right),
+\]
+by the same inexact bookkeeping as in the bare-DCA case
+(\Cref{cor:dca-inexact-target}); here \(T_{\rm sub}(\omega)\) is the number of
+inner iterations to solve one proximal subproblem to accuracy \(\omega\).}
+
+\item We extend the criticality notion to the constrained problem
+\eqref{prob:main} and propose a single-loop method attaining a
+$(\delta_\phi,\delta_g,\epsilon)$-critical point in $O(\epsilon^{-2})$
+iterations under general nonlinear, possibly nonconvex, constraints
+(see \Cref{sec:complexity-analysis-DCA}), matching the unconstrained rate above
+despite nonsmoothness in both components.
+\end{itemize}
+
+
+\subsection{Notations}
+Throughout, $\|\cdot\|$ denotes the Euclidean norm and
+$\langle\cdot,\cdot\rangle$ the standard inner product on $\RR^n$. For
+a proper closed convex function $h$, $\partial h(\bx)$ denotes its
+convex subdifferential, $\partial_\delta h(\bx)$ its
+$\delta$-subdifferential, and $h^*$ its Fenchel conjugate; for a
+locally Lipschitz $F$, $\partial_C F(\bx)$ denotes the Clarke
+subdifferential. We write
+$\operatorname{dist}(A,B) := \inf\limits_{\ba\in A,\,\bb\in B}\|\ba-\bb\|$
+for nonempty sets $A,B\subseteq\RR^n$, and $\operatorname{dist}(\bv,A)
+:= \operatorname{dist}(\{\bv\},A)$. For two sets \(A,B\subseteq\RR^n\), we use the Minkowski difference
+\(A-B\), also called the pairwise difference set, defined by
+\[
+    A-B:=\{\ba-\bb:\ba\in A,\ \bb\in B\}.
+\]  Bold lowercase letters denote
+vectors and $\zero$ the zero vector. 
+

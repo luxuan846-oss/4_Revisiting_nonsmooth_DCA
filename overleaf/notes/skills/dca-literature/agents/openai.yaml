@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCA 文献调研"
+  short_description: "对照函数类、驻点证书与信息成本核对非光滑 DCA 的文献贡献"
+  default_prompt: "使用 $dca-literature 核对当前 DCA 初稿与最接近文献的实质差别。"

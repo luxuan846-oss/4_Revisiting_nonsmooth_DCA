@@ -1,0 +1,840 @@
+\section{Oracle Complexity of Stochastic Case}
+\label{subsec:stoch-ps-dca}
+
+We consider the stochastic composite DC problem
+\begin{equation}
+    \min_{\bx\in\RR^n}\quad
+    F(\bx):=f(\bx)+h(\bx)-g(\bx),
+    \qquad
+    f(\bx):=\EE_{\xi}\bigl[f(\bx;\xi)\bigr],
+    \label{eq:stoch-composite-ps-dca-model}
+\end{equation}
+where $\xi$ denotes a random sample, the smooth component
+$f:\RR^n\to\RR$ is $L_f$-smooth and convex, and $h,g$ are proper closed
+convex functions with $g$ possibly nonsmooth, so that $F$ is generally
+nonconvex and nonsmooth. Only $f$ is stochastic: we access $\nabla f$
+through unbiased samples $\nabla f(\bx;\xi)$ with
+$\EE_\xi[\nabla f(\bx;\xi)]=\nabla f(\bx)$ and variance at most
+$\sigma^2$, while $h$ and $g$ are deterministic. From these samples we
+form a recursive-momentum (STORM) estimator $\bd^k$ of $\nabla f(\bx^k)$,
+which is variance-reduced but \emph{not} conditionally unbiased. When $f$
+is smooth but nonconvex, the convex-side certificate below is
+unavailable, and one reverts to the concave-side
+decomposition~\eqref{eq:stoch-dca-reform}, where the estimator error
+inflates the negative-side tolerance instead; we keep $f$ convex for the
+cleaner two-sided statement.
+
+Our analysis is organized around a single device, the same-point
+two-sided criticality certificate $(\delta_\phi,\delta_g,\eps)$ of
+\Cref{def:delta-eps-critical}, and asks where sampling noise enters this
+certificate and what removing it costs. Along the way, the two DC
+decompositions we use, concave-side and convex-side, generate
+\emph{identical iterates} and carry equivalent certificate information:
+they reallocate the iterate movement $\norm{\bx^{k+1}-\bx^k}$ between the
+tolerance and mismatch slots rather than favoring either. We develop the
+convex-side certificate because it keeps the original decomposition
+$(\phi,g)$, and hence the notation and target of the deterministic
+analysis, whereas the concave-side certificate is what remains available
+when $f$ is nonconvex. The results rest on three building blocks:
+(i)~a realization lemma~(\Cref{lem:stoch-ps-dca-realization}), which
+places the single-loop prox-subgradient iterate \emph{pathwise} into the
+abstract template of~\Cref{cond:certified-prox-descent} and shows that the
+positive-side tolerance $\delta_\phi$ vanishes exactly;
+(ii)~a modular certificate~(\Cref{cor:stoch-ps-dca-rate}), which
+collapses the triple $(\delta_\phi,\delta_g,\eps)$ onto a single averaged
+error $\bar V$; and (iii)~two oracle
+instantiations~(\Cref{cor:vr-sgd-rate,prop:vr-reduced-rate}), which meet
+the resulting budget at cost $O(\eps^{-4})$ and $O(\eps^{-3})$,
+respectively. A recurring theme is that the estimator error enters the
+certificate at \emph{two different powers}, so that variance reduction,
+and not a smaller step size, is what buys a small mismatch slot.
+
+\subsection{Stochastic DCA with momentum}
+
+Fix any $\rho>L_f$. By the $L_f$-smoothness of $f$, the function
+$\tfrac{L_f}{2}\|\bx\|^2-f(\bx)$ is convex. Consequently,
+$\tfrac{\rho}{2}\|\bx\|^2-f(\bx)$ is
+$(\rho-L_f)$-strongly convex, which yields the following DC decomposition:
+\begin{equation}
+    F(\bx)=\Phi(\bx)-G(\bx),
+    \qquad
+    \Phi(\bx):=h(\bx)+\frac{\rho}{2}\|\bx\|^2,
+    \qquad
+    G(\bx):=\frac{\rho}{2}\|\bx\|^2-f(\bx)+g(\bx).
+    \label{eq:stoch-dca-reform}
+\end{equation}
+Here, $\Phi$ is $\rho$-strongly convex and $G$ is
+$(\rho-L_f)$-strongly convex.
+Classical DCA linearizes the concave part $-G$ at $\bx^k$ using an
+estimated subgradient $\zeta^k$ of $G$, replacing the unavailable
+$\nabla f(\bx^k)$ with the stochastic estimator $\bd^k$; the resulting
+iteration is summarized in Algorithm~\ref{alg:stoch-dca}. Because the
+$\tfrac{\rho}{2}\|\bx\|^2$ term makes $\Phi$ $\rho$-strongly convex, the
+subproblem has a unique minimizer, given in closed form by the proximal
+step \eqref{eq:stoch-dca-closed-form}.
+
+\begin{algorithm}[tbp]
+    \caption{\textbf{Stochastic DCA with momentum (concave-side linearization)}}
+    \label{alg:stoch-dca}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} Initial point $\bx^0\in\dom\Phi$,
+        iteration number $K\ge1$, curvature parameter $\rho>L_f$.
+        \FOR{$k=0,1,\ldots,K-1$}
+            \STATE Compute the STORM (recursive momentum) estimator
+            $\bd^k$ of $\nabla f(\bx^k)$.
+            \STATE Choose $\bw^k\in\partial g(\bx^k)$.
+            \STATE Form the estimated subgradient of the concave part $-G$:
+            \[
+                \zeta^k:=\rho\bx^k-\bd^k+\bw^k .
+            \]
+            \STATE Solve the $\rho$-strongly convex subproblem
+            \begin{equation}
+                \bx^{k+1}
+                =\argmin_{\bx}\bigl\{\Phi(\bx)-\langle\zeta^k,\bx\rangle\bigr\}
+                =\prox_{h/\rho}\!\left(\bx^k-\frac{1}{\rho}(\bd^k-\bw^k)\right).
+                \label{eq:stoch-dca-closed-form}
+            \end{equation}
+        \ENDFOR
+        \STATE {\bfseries Output:} $\bx^{K}$.
+    \end{algorithmic}
+\end{algorithm}
+
+\paragraph{Strategy 2: convex-side linearization (PS-DCA).}
+Keeping the original decomposition $\phi:=f+h$, $g$ unchanged, we
+linearize only the smooth $f$ (proximal-gradient style) and use an exact
+subgradient of $g$, exactly as in \eqref{eq:ps-dca-step}, with
+$\nabla f(\bx^k)$ replaced by $\bd^k$:
+\begin{equation}
+    \bx^{k+1}
+    =
+    \prox_{\eta h}
+    \bigl(
+        \bx^k-\eta(\bd^k-\bv^k)
+    \bigr),
+    \qquad
+    \bv^k\in\partial g(\bx^k).
+    \label{eq:stoch-ps-dca-step}
+\end{equation}
+
+\begin{remark}[The two updates coincide]
+Setting $\eta=1/\rho$ in \eqref{eq:stoch-ps-dca-step} and $\bv^k=\bw^k$
+recovers exactly \eqref{eq:stoch-dca-closed-form}. The two strategies
+produce the \emph{same iterate sequence}; they differ only in which DC
+decomposition, $(\Phi,G)$ or $(\phi,g)$, is used to certify criticality
+of that sequence.
+\end{remark}
+
+\subsection{The two certificates of a single iterate}
+\label{subsec:cert-comparison}
+
+The iterate~\eqref{eq:stoch-dca-closed-form} solves both DC
+decompositions at once, so it can be certified against either $(\phi,g)$
+or $(\Phi,G)$. We record both certificates and their exact relationship.
+The two carry equivalent information; they differ only in how they split
+the iterate movement $s^k:=\bx^{k+1}-\bx^k$ between the negative-side
+tolerance and the subgradient mismatch.
+
+\paragraph{Convex-side certificate $(\phi,g)$.} With $f$ convex, the
+vector $\bu^{k+1}:=\nabla f(\bx^{k+1})+\bw^{k+1}$ satisfies
+$\bu^{k+1}\in\partial\phi(\bx^{k+1})$ \emph{exactly}, so $\delta_\phi=0$
+pathwise (\Cref{lem:stoch-ps-dca-realization}). The estimator error and
+the movement both surface in the mismatch slot,
+$\norm{\bu^{k+1}-\bv^k}\le r_\eta\norm{s^k}+\norm{e^k}$, while the
+negative-side tolerance $\delta_g^{k+1}=\Phi_g(\bx^{k+1},\bv^k)$ keeps its
+deterministic definition and telescopes to $O(\Delta_0/K+\eta\bar V)$
+(\Cref{cor:stoch-ps-dca-rate}).
+
+\paragraph{Concave-side certificate $(\Phi,G)$.} The certificate vector on
+the $G$-side is a \emph{free} choice, and the right one is the exact
+subgradient
+$\xi^k_{\mathrm{true}}:=\rho\bx^k-\nabla f(\bx^k)+\bw^k\in\partial G(\bx^k)$,
+not the iterate-generating vector $\zeta^k=\rho\bx^k-\bd^k+\bw^k$; the two
+differ by exactly the estimator error,
+$\zeta^k-\xi^k_{\mathrm{true}}=e^k$. Transporting $\xi^k_{\mathrm{true}}$
+to $\bx^{k+1}$ places, on the same point,
+$\zeta^k\in\partial\Phi(\bx^{k+1})$ (so $\delta_\Phi=0$),
+$\xi^k_{\mathrm{true}}\in\partial_{\delta_G}G(\bx^{k+1})$, and a mismatch
+of exactly $\norm{\zeta^k-\xi^k_{\mathrm{true}}}=\norm{e^k}$, with
+\emph{no} $\norm{s^k}$ term. By $\rho$-strong convexity of $\Phi$,
+\[
+    F(\bx^k)-F(\bx^{k+1})
+    \ \ge\
+    \tfrac{\rho}{2}\norm{s^k}^2+\delta_G^{k+1}-\langle e^k,s^k\rangle,
+\]
+so $\delta_G$ telescopes to $O(\Delta_0/K+\bar V)$. Certifying with
+$\zeta^k$ itself is not merely looser but ill-posed: the Fenchel gap
+$\Phi_G(\bx^k,\zeta^k)$ is $+\infty$ whenever $\zeta^k\notin\dom G^*$,
+which happens for any $e^k\neq\zero$ when $G$ has bounded subgradients
+(e.g.\ $f=\tfrac\rho2\norm{\cdot}^2$, $g=\norm{\cdot}_1$).
+
+\paragraph{Exact relationship, and why neither dominates.} The two
+negative-side tolerances differ by the Bregman divergence of the smooth
+part $G_s:=\tfrac\rho2\norm{\cdot}^2-f$ of $G$,
+\begin{equation}
+    \delta_G^{k+1}=\delta_g^{k+1}+D_{G_s}(\bx^{k+1},\bx^k),
+    \qquad
+    0\le D_{G_s}(\bx^{k+1},\bx^k)\le\tfrac{\rho}{2}\norm{s^k}^2 .
+    \label{eq:cert-bregman-gap}
+\end{equation}
+The movement $\norm{s^k}$ thus appears in \emph{both} certificates:
+linearly in the convex-side mismatch, and quadratically inside the
+concave-side tolerance. On the natural scale $\delta\sim\eps^2$, where
+$\tfrac1K\sum_k\norm{s^k}^2=O(1/K)$ and
+$\tfrac1K\sum_k\norm{s^k}=O(1/\sqrt K)$, the two allocations coincide:
+both certificates reach an $\eps$-slot in $K=O(\eps^{-2})$ iterations and
+$O(\eps^{-3})$ variance-reduced oracle calls
+(\Cref{prop:vr-reduced-rate}). Neither certificate dominates the other.
+Indeed no decomposition-free ordering exists: $\delta_G$ and $\delta_g$
+are Fenchel gaps of \emph{different} convex functions, so comparing
+$(\delta_\Phi,\delta_G,\eps)$ with $(\delta_\phi,\delta_g,\eps)$ is not
+defined until both are mapped to a common, decomposition-independent
+target such as Goldstein stationarity. The one intrinsic asymmetry is
+scope: the convex-side certificate requires $f$ convex, whereas the
+concave-side certificate remains valid for nonconvex $f$.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+ & Convex-side $(\phi,g)$ & Concave-side $(\Phi,G)$ \\
+\midrule
+$\delta_\phi$ / $\delta_\Phi$ & $0$ (exact) & $0$ (exact) \\
+negative-side tolerance & $\delta_g=O(\Delta_0/K+\eta\bar V)$ & $\delta_G=\delta_g+D_{G_s}=O(\Delta_0/K+\bar V)$ \\
+mismatch slot $\eps$ & $r_\eta\norm{s^k}+\norm{e^k}$ & $\norm{e^k}$ only \\
+where $\norm{s^k}$ sits & $\eps$ slot (linear) & $\delta_G$ (quadratic) \\
+requires $f$ convex & yes & no \\
+oracle complexity (VR) & $O(\eps^{-3})$ & $O(\eps^{-3})$ \\
+\bottomrule
+\end{tabular}
+\caption{The same iterate certified two ways. The certificates carry
+equivalent information, reallocating the movement $\norm{s^k}$ between the
+mismatch and tolerance slots; on the scale $\delta\sim\eps^2$ they yield
+the same rates. The one intrinsic difference is that the convex-side form
+requires $f$ convex.}
+\end{table}
+
+\begin{remark}[Relation to intrinsic DC complexity]
+This is a concrete instance of decomposition-dependence: the same
+minimizing sequence yields different $(\delta,\eps)$ certificates
+under different valid DC splittings of $F$. It motivates treating the
+decomposition itself as a free parameter and taking the infimum over
+valid splittings, as in the intrinsic DC complexity program.
+\end{remark}
+
+\subsection{Oracle Complexity of stochastic DCA}
+We now instantiate the abstract certificate of
+\Cref{cond:certified-prox-descent} for the stochastic prox-subgradient
+iterate and read its complexity off a single scalar, the averaged
+estimator error. The iterate uses stepsize $\eta\in(0,1/L_f)$ and $s^k:=\bx^{k+1}-\bx^k$. The
+subtracted subgradient $\bv^k\in\partial g(\bx^k)$ and, later,
+$\bw^{k+1}\in\partial h(\bx^{k+1})$ remain exact; only the smooth
+gradient is estimated. We keep the estimator abstract and control it
+solely through its mean-squared error,
+\begin{equation}
+    e^k:=\nabla f(\bx^k)-d^k,
+    \qquad
+    V_k:=\EE\norm{e^k}^2,
+    \qquad
+    \bar V:=\frac1K\sum_{k=0}^{K-1}V_k,
+    \label{eq:stoch-ps-dca-variance}
+\end{equation}
+so that $V_k$ is the \emph{total} error (bias plus variance); we do not
+assume $\EE[d^k\mid\calF_k]=\nabla f(\bx^k)$. Every statement below is in
+terms of $\{V_k\}$ and $\bar V$; a concrete reduced-variance oracle only
+fixes the size of $\bar V$.
+
+\begin{lemma}[Stochastic PS-DCA realization]
+\label{lem:stoch-ps-dca-realization}
+Assume \eqref{eq:stoch-composite-ps-dca-model}, let $\eta\in(0,1/L_f)$, and
+let $\{\bx^k\}_{k\ge0}$ be generated by \eqref{eq:stoch-ps-dca-step}.
+Define
+\[
+    a'_\eta:=\frac1{2\eta}-\frac{L_f}{2}
+    =a_\eta-\frac1{2\eta},
+    \qquad
+    r_\eta:=\frac1\eta+L_f ,
+\]
+where $a_\eta=\eta^{-1}-L_f/2$ is the deterministic curvature of
+\Cref{lem:ps-dca-realization}. Then $a'_\eta>0$. The $\phi$-side
+certificate \eqref{eq:abstract-prox-phi-cert} and descent
+\eqref{eq:abstract-prox-descent} of
+\Cref{cond:certified-prox-descent} hold \emph{pathwise} with
+\[
+    a=a'_\eta,
+    \qquad
+    \sigma_k=\frac\eta2\norm{e^k}^2,
+\]
+while the dual residual is the deterministic bound $r_\eta\norm{s^k}$
+augmented by a first-order error term $\norm{e^k}$.
+Concretely, set
+$\bw^{k+1}:=\bv^k-d^k-\eta^{-1}s^k$ and
+$\bu^{k+1}:=\nabla f(\bx^{k+1})+\bw^{k+1}$. Then, for every realization,
+\emph{(i)} \textup{(exact $\phi$-side certificate)}
+$\bw^{k+1}\in\partial h(\bx^{k+1})$ and
+\[
+    \bu^{k+1}
+    \in
+    \partial\phi(\bx^{k+1})
+    \subseteq
+    \partial_{\sigma_k}\phi(\bx^{k+1}),
+\]
+so \eqref{eq:abstract-prox-phi-cert} holds with subgradient slack $0$;
+\emph{(ii)} \textup{(dual residual --- first-power error)}
+\begin{equation}
+    \norm{\bu^{k+1}-\bv^k}
+    =
+    \norm{\nabla f(\bx^{k+1})-d^k-\eta^{-1}s^k}
+    \le
+    r_\eta\norm{s^k}+\norm{e^k},
+    \label{eq:stoch-ps-dca-residual}
+\end{equation}
+i.e.\ the deterministic residual \eqref{eq:abstract-prox-dual-residual}
+plus the error term $\norm{e^k}$, whose expectation obeys
+$\EE\norm{e^k}\le\sqrt{V_k}$;
+\emph{(iii)} \textup{(descent --- second-power error)}
+\begin{equation}
+    F(\bx^k)-F(\bx^{k+1})
+    \ge
+    \delta_g^{k+1}
+    +a'_\eta\norm{s^k}^2
+    -\frac\eta2\norm{e^k}^2,
+    \label{eq:stoch-ps-dca-descent}
+\end{equation}
+i.e.\ \eqref{eq:abstract-prox-descent} with
+$\sigma_k=\tfrac\eta2\norm{e^k}^2$, whence
+$\EE[\sigma_k]=\tfrac\eta2 V_k$.
+\end{lemma}
+
+\begin{proof}
+The iterate \eqref{eq:stoch-ps-dca-step} is the minimizer of the
+$\eta^{-1}$-strongly convex map
+$Q_k(\bx):=h(\bx)+\langle d^k-\bv^k,\bx\rangle
++\tfrac1{2\eta}\norm{\bx-\bx^k}^2$, with optimality condition
+$\zero\in\partial h(\bx^{k+1})+(d^k-\bv^k)+\eta^{-1}s^k$.
+
+\emph{(i)} The optimality condition gives
+$\bw^{k+1}=\bv^k-d^k-\eta^{-1}s^k\in\partial h(\bx^{k+1})$. Since $f$ is
+convex and differentiable,
+$\bu^{k+1}=\nabla f(\bx^{k+1})+\bw^{k+1}
+\in\partial f(\bx^{k+1})+\partial h(\bx^{k+1})=\partial\phi(\bx^{k+1})$,
+an \emph{exact} inclusion; hence
+$\bu^{k+1}\in\partial_{\sigma_k}\phi(\bx^{k+1})$ for the $\sigma_k$ of
+part (iii), $\sigma_k\ge0$.
+
+\emph{(ii)} Substituting $\bw^{k+1}$,
+\[
+    \bu^{k+1}-\bv^k
+    =\nabla f(\bx^{k+1})-d^k-\eta^{-1}s^k
+    =\bigl(\nabla f(\bx^{k+1})-\nabla f(\bx^k)-\eta^{-1}s^k\bigr)+e^k .
+\]
+The bracket is bounded by $(L_f+\eta^{-1})\norm{s^k}=r_\eta\norm{s^k}$
+exactly as in \Cref{lem:ps-dca-realization}, and the triangle
+inequality yields \eqref{eq:stoch-ps-dca-residual}. By Jensen,
+$\EE\norm{e^k}\le(\EE\norm{e^k}^2)^{1/2}=\sqrt{V_k}$.
+
+\emph{(iii)} Strong convexity of $Q_k$ at its minimizer gives
+$Q_k(\bx^k)-Q_k(\bx^{k+1})\ge\tfrac1{2\eta}\norm{s^k}^2$, which upon
+expansion reads
+\begin{equation}
+    h(\bx^k)-h(\bx^{k+1})
+    +\langle\bv^k-d^k,s^k\rangle
+    \ge
+    \eta^{-1}\norm{s^k}^2 .
+    \label{eq:stoch-ps-dca-h-descent}
+\end{equation}
+Using $L_f$-smoothness,
+$f(\bx^k)-f(\bx^{k+1})\ge-\langle\nabla f(\bx^k),s^k\rangle
+-\tfrac{L_f}2\norm{s^k}^2$, the identity
+$\delta_g^{k+1}=g(\bx^{k+1})-g(\bx^k)-\langle\bv^k,s^k\rangle
+=\Phi_g(\bx^{k+1},\bv^k)\ge0$, and \eqref{eq:stoch-ps-dca-h-descent},
+\[
+\begin{aligned}
+    F(\bx^k)-F(\bx^{k+1})
+    &=\bigl[f(\bx^k)-f(\bx^{k+1})\bigr]
+    +\bigl[h(\bx^k)-h(\bx^{k+1})\bigr]
+    +\langle\bv^k,s^k\rangle
+    +\delta_g^{k+1}
+    \\
+    &\ge
+    a_\eta\norm{s^k}^2
+    +\langle d^k-\nabla f(\bx^k),s^k\rangle
+    +\delta_g^{k+1}
+    \\
+    &=
+    a_\eta\norm{s^k}^2
+    -\langle e^k,s^k\rangle
+    +\delta_g^{k+1} ,
+\end{aligned}
+\]
+which is the deterministic bound of \Cref{lem:ps-dca-realization} plus
+the sole new object, the error cross term $-\langle e^k,s^k\rangle$.
+Splitting it by Young's inequality,
+$\langle e^k,s^k\rangle
+\le\tfrac\eta2\norm{e^k}^2+\tfrac1{2\eta}\norm{s^k}^2$, gives
+\[
+    F(\bx^k)-F(\bx^{k+1})
+    \ge
+    \Bigl(a_\eta-\frac1{2\eta}\Bigr)\norm{s^k}^2
+    +\delta_g^{k+1}
+    -\frac\eta2\norm{e^k}^2,
+\]
+which is \eqref{eq:stoch-ps-dca-descent} with
+$a'_\eta=a_\eta-\tfrac1{2\eta}=\tfrac1{2\eta}-\tfrac{L_f}2$. Finally
+$a'_\eta>0\iff\eta<1/L_f$, and $\EE[\sigma_k]=\tfrac\eta2 V_k$.
+\end{proof}
+
+\begin{remark}[Two powers of one error]
+\label{rem:two-power}
+The estimator error $e^k$ enters the two sides of the certificate at
+\emph{different} powers. In the dual residual
+\eqref{eq:stoch-ps-dca-residual} it appears \emph{linearly}, as
+$\norm{e^k}$ (hence $\sqrt{V_k}$ in expectation), because it sits
+additively inside a norm. In the descent
+\eqref{eq:stoch-ps-dca-descent} it appears \emph{quadratically}, as
+$\tfrac\eta2\norm{e^k}^2$ (hence $\tfrac\eta2 V_k$), because the only
+error-dependent term, the cross term $\langle e^k,s^k\rangle$, must be
+Young-split against the curvature $\norm{s^k}^2$. Through the abstract
+accounting the linear error $\norm{e^k}$ feeds only the additive part of the
+$\eps$-mismatch, while the quadratic $\sigma_k$ feeds
+$\delta_\phi$, $\delta_g$, and the $\sqrt{\,\cdot\,}$ part of $\eps$.
+Consequently the same $\bar V$ surfaces as $\sqrt{\bar V}$ in one slot
+and as $\eta\bar V$ in the others; this is precisely why variance
+reduction ($\bar V\to0$) is what buys a small $\eps$-slot, and why a
+fixed noise level leaves an irreducible $\sqrt{\bar V}$ floor.
+\end{remark}
+
+We call $\bar\bx$ a \emph{$(\delta_\phi,\delta_g,\eps)$-critical point in
+expectation} if there exist (random) dual vectors $\bu,\bv$ with
+$\EE[\Phi_\phi(\bar\bx,\bu)]\le\delta_\phi$,
+$\EE[\Phi_g(\bar\bx,\bv)]\le\delta_g$, and
+$\EE\norm{\bu-\bv}\le\eps$ --- the in-expectation lift of the
+Fenchel-gap form of \Cref{def:delta-eps-critical}. Unlike the
+deterministic analysis, which returns the best iterate through
+$\hat k\in\argmin_k\{\delta_g^{k+1}+a\norm{s^k}^2\}$, the stochastic
+result draws $\hat k$ \emph{uniformly at random}: the argmin index is
+correlated with the realized errors $\{e^k\}$, so the selected-index
+residual $\EE\norm{e^{\hat k}}$ cannot be controlled by the
+second-moment budget alone (it may grow like $\sqrt{K\bar V}$), whereas
+averaging over a uniform, run-independent $\hat k$ restores
+$\EE[Z_{\hat k}]=\tfrac1K\sum_k\EE[Z_k]$ and closes the certificate.
+
+\begin{corollary}[Abstract stochastic complexity of PS-DCA]
+\label{cor:stoch-ps-dca-rate}
+Suppose $F^\star>-\infty$ and the assumptions of
+\Cref{lem:stoch-ps-dca-realization} hold. Fix $K\ge1$, let the output
+index $\hat k$ be drawn uniformly at random from $\{0,\dots,K-1\}$
+independently of $\{d^k\}$, and set $\Delta_0:=F(\bx^0)-F^\star$ and
+$\bar\bx:=\bx^{\hat k+1}$. Then, with $\bu:=\bu^{\hat k+1}$ and
+$\bv:=\bv^{\hat k}$ from \Cref{lem:stoch-ps-dca-realization},
+\begin{align}
+    \EE[\Phi_\phi(\bar\bx,\bu)]
+    &\le
+    \frac\eta2\,\bar V
+    =:\delta_\phi,
+    \label{eq:stoch-ps-dca-dphi}
+    \\
+    \EE[\Phi_g(\bar\bx,\bv)]
+    &\le
+    \frac{\Delta_0}K+\frac\eta2\,\bar V
+    =:\delta_g,
+    \label{eq:stoch-ps-dca-dg}
+    \\
+    \EE\norm{\bu-\bv}
+    &\le
+    r_\eta
+    \sqrt{
+        \frac1{a'_\eta}
+        \Bigl(\frac{\Delta_0}K+\frac\eta2\,\bar V\Bigr)
+    }
+    +\sqrt{\bar V}
+    =:\eps ,
+    \label{eq:stoch-ps-dca-eps}
+\end{align}
+so $\bar\bx$ is a $(\delta_\phi,\delta_g,\eps)$-critical point in
+expectation. The bound \eqref{eq:stoch-ps-dca-dphi} is in fact sharp
+with $\Phi_\phi(\bar\bx,\bu)=0$ pathwise: the value $\tfrac\eta2\bar V$
+is the tolerance the template assigns through the shared slack
+$\sigma_k$, not a genuine $\phi$-side inexactness.
+\end{corollary}
+
+\begin{proof}
+Summing \eqref{eq:stoch-ps-dca-descent} over $k=0,\dots,K-1$ and using
+$F(\bx^K)\ge F^\star$,
+\[
+    \sum_{k=0}^{K-1}
+    \bigl[\delta_g^{k+1}+a'_\eta\norm{s^k}^2\bigr]
+    \le
+    \Delta_0+\frac\eta2\sum_{k=0}^{K-1}\norm{e^k}^2
+    \qquad\text{(pathwise).}
+\]
+Taking full expectation and using \eqref{eq:stoch-ps-dca-variance},
+\begin{equation}
+    \sum_{k=0}^{K-1}
+    \EE\bigl[\delta_g^{k+1}+a'_\eta\norm{s^k}^2\bigr]
+    \le
+    \Delta_0+\frac\eta2 K\bar V .
+    \label{eq:stoch-ps-dca-telescope}
+\end{equation}
+Both summands on the left are nonnegative
+($\delta_g^{k+1}=\Phi_g(\bx^{k+1},\bv^k)\ge0$, $a'_\eta>0$). Since
+$\hat k$ is uniform on $\{0,\dots,K-1\}$ and independent of the run,
+$\EE[Z_{\hat k}]=\tfrac1K\sum_{k}\EE[Z_k]$ for any adapted
+nonnegative $\{Z_k\}$. Dropping the $a'_\eta\norm{s^k}^2$ sum in
+\eqref{eq:stoch-ps-dca-telescope} and using
+$\Phi_g(\bar\bx,\bv)=\delta_g^{\hat k+1}$ gives
+\eqref{eq:stoch-ps-dca-dg}; dropping instead the $\delta_g^{k+1}$ sum
+gives
+\[
+    \EE\norm{s^{\hat k}}^2
+    =\frac1K\sum_{k=0}^{K-1}\EE\norm{s^k}^2
+    \le
+    \frac1{a'_\eta}
+    \Bigl(\frac{\Delta_0}K+\frac\eta2\bar V\Bigr).
+\]
+For the $\phi$-side, $\Phi_\phi(\bar\bx,\bu)=0$ by
+\Cref{lem:stoch-ps-dca-realization}(i), and
+$\EE[\sigma_{\hat k}]=\tfrac\eta2\cdot\tfrac1K\sum_k V_k
+=\tfrac\eta2\bar V$, which is \eqref{eq:stoch-ps-dca-dphi}. Finally, by
+\eqref{eq:stoch-ps-dca-residual}, Jensen, and concavity of $\sqrt{\cdot}$,
+\[
+    \EE\norm{\bu-\bv}
+    \le
+    r_\eta\,\EE\norm{s^{\hat k}}+\EE\norm{e^{\hat k}}
+    \le
+    r_\eta\sqrt{\EE\norm{s^{\hat k}}^2}
+    +\frac1K\sum_{k=0}^{K-1}\sqrt{V_k}
+    \le
+    r_\eta\sqrt{\frac1{a'_\eta}\Bigl(\frac{\Delta_0}K+\frac\eta2\bar V\Bigr)}
+    +\sqrt{\bar V},
+\]
+using $\tfrac1K\sum_k\sqrt{V_k}\le\sqrt{\tfrac1K\sum_k V_k}=\sqrt{\bar
+V}$. This is \eqref{eq:stoch-ps-dca-eps}.
+\end{proof}
+
+\begin{remark}[Instance, limits, and the noise floor]
+\label{rem:stoch-ps-dca-instance}
+For $\eta=1/(2L_f)$ one has $a'_\eta=L_f/2$ and $r_\eta=3L_f$, so
+\Cref{cor:stoch-ps-dca-rate} reads
+\[
+    \delta_\phi=\frac{\bar V}{4L_f},
+    \quad
+    \delta_g=\frac{\Delta_0}K+\frac{\bar V}{4L_f},
+    \quad
+    \eps\le
+    \sqrt{\frac{18L_f\Delta_0}{K}+\frac92\bar V}+\sqrt{\bar V}.
+\]
+Two regimes follow. \emph{(a) Variance reduction:} as $\bar V\to0$ the
+triple collapses to
+$\bigl(0,\ \Delta_0/K,\ r_\eta\sqrt{\Delta_0/(a'_\eta K)}\bigr)$, the
+$O(K^{-1/2})$ shape of the deterministic
+\Cref{cor:ps-dca-complexity}; the constant is inflated only because the
+Young split replaces $a_\eta$ by the smaller $a'_\eta$ (with no error the
+split is unnecessary and $a_\eta$ is recovered). \emph{(b) Fixed noise:}
+if $\bar V\ge\sigma^2>0$ for all $K$ (e.g.\ plain SGD), then
+$\eps\ge\sqrt{\bar V}\ge\sigma$ regardless of $K$ --- an irreducible
+noise floor that only $\bar V\to0$ removes. The admissible range
+tightens from $\eta\in(0,2/L_f)$ to $\eta\in(0,1/L_f)$, with
+$\eta=1/L_f$ the degenerate boundary $a'_\eta=0$; the $\eps$-constant
+$r_\eta^2/a'_\eta=2(\eta^{-1}+L_f)^2/(\eta^{-1}-L_f)$ is minimized at
+$\eta=1/(3L_f)$, giving $r_\eta^2/a'_\eta=16L_f$ (versus the
+deterministic optimum $6L_f$).
+\end{remark}
+
+\subsection{Variance-Reduced Instantiations and Existing Rates}
+\label{subsec:stoch-instances}
+
+\Cref{cor:stoch-ps-dca-rate} collapses the entire stochastic analysis onto a
+single scalar, the averaged mean-squared error $\bar V$: the certificate triple
+$(\delta_\phi,\delta_g,\eps)$ is an explicit, fixed function of $\bar V$ and the
+horizon $K$, and a concrete gradient oracle enters only by fixing how fast
+$\bar V$ decays. We first isolate the resulting budget
+(\Cref{cor:vr-slot-reduction}), then meet it with two oracles at opposite costs:
+a bounded-variance minibatch, which pays the $O(\eps^{-4})$ rate
+(\Cref{cor:vr-sgd-rate}), and a variance-reduced estimator whose error couples to
+the iterate drift, which targets $O(\eps^{-3})$ (\Cref{prop:vr-reduced-rate}).
+Throughout we fix $\eta=1/(2L_f)$, so that $a'_\eta=L_f/2$ and $r_\eta=3L_f$ as in
+\Cref{rem:stoch-ps-dca-instance}.
+
+\begin{corollary}[Modular slot budget]
+\label{cor:vr-slot-reduction}
+Under the assumptions of \Cref{cor:stoch-ps-dca-rate} with $\eta=1/(2L_f)$, fix
+$\eps>0$ and set
+\[
+    c_1:=\min\Bigl\{\tfrac14,\ \tfrac{a'_\eta}{4\eta r_\eta^2}\Bigr\}=\frac1{36},
+    \qquad
+    c_2:=\frac{8r_\eta^2}{a'_\eta}=144\,L_f .
+\]
+If
+\begin{equation}
+    \bar V\le c_1\eps^2
+    \qquad\text{and}\qquad
+    K\ge c_2\,\frac{\Delta_0}{\eps^2},
+    \label{eq:vr-slot-budget}
+\end{equation}
+then the output $\bar\bx$ of \Cref{cor:stoch-ps-dca-rate} is a
+$(\delta_\phi,\delta_g,\eps)$-critical point in expectation with
+$\delta_\phi\le \eps^2/(144L_f)$ and $\delta_g\le \eps^2/(72L_f)$; in particular
+$\delta_\phi,\delta_g=O(\eps^2)$ ride free at the $\eps^2$ scale while the
+mismatch slot is driven to $\eps$.
+\end{corollary}
+
+\begin{proof}
+Write the mismatch slot of \Cref{cor:stoch-ps-dca-rate} as
+$\eps_{\mathrm{slot}}
+ =r_\eta\sqrt{\tfrac1{a'_\eta}\bigl(\tfrac{\Delta_0}K+\tfrac\eta2\bar V\bigr)}
+ +\sqrt{\bar V}$.
+By \eqref{eq:vr-slot-budget}, $\sqrt{\bar V}\le\sqrt{c_1}\,\eps\le\eps/2$ since
+$c_1\le\tfrac14$. For the first term, $K\ge c_2\Delta_0/\eps^2$ gives
+$\Delta_0/K\le a'_\eta\eps^2/(8r_\eta^2)$, while
+$\bar V\le c_1\eps^2\le a'_\eta\eps^2/(4\eta r_\eta^2)$ gives
+$\tfrac\eta2\bar V\le a'_\eta\eps^2/(8r_\eta^2)$; hence
+$\tfrac{\Delta_0}K+\tfrac\eta2\bar V\le a'_\eta\eps^2/(4r_\eta^2)$ and
+$r_\eta\sqrt{\tfrac1{a'_\eta}\cdot a'_\eta\eps^2/(4r_\eta^2)}=\eps/2$, so
+$\eps_{\mathrm{slot}}\le\eps$. The slot values follow from
+$\delta_\phi=\tfrac\eta2\bar V\le\tfrac1{4L_f}c_1\eps^2=\eps^2/(144L_f)$ and
+$\delta_g=\tfrac{\Delta_0}K+\tfrac\eta2\bar V\le\eps^2/(144L_f)+\eps^2/(144L_f)$,
+using $\eps^2/c_2=\eps^2/(144L_f)$ and $\eta=1/(2L_f)$.
+\end{proof}
+
+\begin{assumption}[Unbiased bounded-variance oracle]
+\label{asm:vr-bounded-var}
+The estimator $d^k=\tfrac1b\sum_{i=1}^b\bg_i^k$ averages $b$ i.i.d.\ unbiased
+samples, $\EE[\bg_i^k\mid\calF_k]=\nabla f(\bx^k)$, each of variance
+$\EE[\norm{\bg_i^k-\nabla f(\bx^k)}^2\mid\calF_k]\le\sigma^2$ for a fixed
+$\sigma^2>0$.
+\end{assumption}
+
+Under \Cref{asm:vr-bounded-var} the total error is pure variance,
+$V_k=\EE\norm{e^k}^2\le\sigma^2/b$ for every $k$, hence $\bar V\le\sigma^2/b$.
+Unlike \Cref{lem:stoch-ps-dca-realization}, which controls only the total error
+$V_k$ and needs no unbiasedness, the identification $V_k\le\sigma^2/b$ uses
+$\EE[d^k\mid\calF_k]=\nabla f(\bx^k)$.
+
+\begin{corollary}[Bounded-variance rate: $O(\eps^{-4})$]
+\label{cor:vr-sgd-rate}
+Let \Cref{asm:vr-bounded-var} hold, fix $\eta=1/(2L_f)$, and let $\eps>0$. Taking
+\[
+    b=\Bigl\lceil\tfrac{\sigma^2}{c_1\eps^2}\Bigr\rceil
+     =\Bigl\lceil\tfrac{36\sigma^2}{\eps^2}\Bigr\rceil,
+    \qquad
+    K=\Bigl\lceil c_2\tfrac{\Delta_0}{\eps^2}\Bigr\rceil
+     =\Bigl\lceil\tfrac{144L_f\Delta_0}{\eps^2}\Bigr\rceil,
+\]
+the output $\bar\bx$ is a $(\delta_\phi,\delta_g,\eps)$-critical point in
+expectation with $\delta_\phi,\delta_g=O(\eps^2)$, and the total number of
+stochastic-gradient evaluations is
+\[
+    K\cdot b=O\!\Bigl(\frac{\sigma^2 L_f\Delta_0}{\eps^4}\Bigr).
+\]
+\end{corollary}
+
+\begin{proof}
+The choice of $b$ gives $\bar V\le\sigma^2/b\le c_1\eps^2$, and
+$K\ge c_2\Delta_0/\eps^2$; thus \eqref{eq:vr-slot-budget} holds and
+\Cref{cor:vr-slot-reduction} applies. The cost is
+$K\cdot b=\Theta(L_f\Delta_0/\eps^2)\cdot\Theta(\sigma^2/\eps^2)$.
+\end{proof}
+
+\begin{assumption}[MVR variance recursion \citep{chayti2025stochastic}]
+\label{asm:vr-mvr}
+The estimator $d^k$ is unbiased and satisfies averaged $L_f$-smoothness; for a
+momentum weight $\alpha\in(0,1]$ and constant batch $b$ its error obeys, in
+expectation,
+\begin{equation}
+    V_{k+1}\le(1-\alpha)V_k
+            +\frac{2L_f^2}{b}\,\EE\norm{s^k}^2
+            +\frac{2\alpha^2\sigma^2}{b}.
+    \label{eq:vr-mvr-recursion}
+\end{equation}
+\end{assumption}
+
+\begin{proposition}[MVR coupling: variance decay and its floor]
+\label{prop:vr-reduced-rate}
+Let \Cref{asm:vr-mvr} hold, fix $\eta=1/(2L_f)$ and $\beta=\eta/\alpha$, and
+impose the drift-domination batch condition
+\begin{equation}
+    b\ \ge\ \frac{4\eta L_f^2}{\alpha\,a'_\eta}\ =\ \frac4\alpha .
+    \label{eq:vr-drift-batch}
+\end{equation}
+Then the coupled potential $\Phi_k:=(F(\bx^k)-F^\star)+\beta V_k$ is nonincreasing
+in expectation up to the additive noise $2\beta\alpha^2\sigma^2/b$ per step, and
+\begin{equation}
+    \bar V\ \le\ \frac{4L_f\Delta_0}{K}
+                +\frac{2V_0}{\alpha K}
+                +\frac{4\alpha\sigma^2}{b}.
+    \label{eq:vr-variance-bound}
+\end{equation}
+Two readings follow. \emph{(a) Constant batch:} for $\alpha,b$ held fixed (with
+$\alpha b\ge4$) the $O(1/K)$ transients vanish, but $\bar V\to4\alpha\sigma^2/b>0$,
+an irreducible $O(\alpha/b)$ variance floor; constant-batch MVR therefore does
+\emph{not} send $\bar V\to0$, and \Cref{cor:vr-slot-reduction} does not apply.
+\emph{(b) $\eps$-tied schedule:} initializing with a batch of size
+$\Theta(\sigma^2/\eps^2)$ so that $V_0=O(\eps^2)$, and scaling
+$\alpha=\Theta(\eps/\sigma)$, $b=\Theta(\sigma/\eps)$---so
+\eqref{eq:vr-drift-batch} holds and the floor becomes
+$4\alpha\sigma^2/b=\alpha^2\sigma^2=O(\eps^2)$---one has $\bar V\le c_1\eps^2$
+after $K=\Theta(L_f\Delta_0/\eps^2)$ steps, whence \Cref{cor:vr-slot-reduction}
+returns an $\eps$-slot at total first-order cost
+\[
+    K\cdot b+\Theta(\sigma^2/\eps^2)
+    =O\!\Bigl(\frac{\sigma L_f\Delta_0}{\eps^3}\Bigr),
+\]
+the online rate of \citet{chayti2025stochastic}.
+\end{proposition}
+
+\begin{proof}
+Taking expectations in \eqref{eq:stoch-ps-dca-descent} and writing
+$S_k:=\EE\norm{s^k}^2$,
+\[
+    \EE[F(\bx^k)-F(\bx^{k+1})]
+    \ge\EE[\delta_g^{k+1}]+a'_\eta S_k-\tfrac\eta2 V_k .
+\]
+From \eqref{eq:vr-mvr-recursion},
+$V_k-V_{k+1}\ge\alpha V_k-(2L_f^2/b)S_k-2\alpha^2\sigma^2/b$, so
+\[
+    \Phi_k-\Phi_{k+1}
+    \ge\EE[\delta_g^{k+1}]
+      +\Bigl(a'_\eta-\tfrac{2\beta L_f^2}{b}\Bigr)S_k
+      +\Bigl(\beta\alpha-\tfrac\eta2\Bigr)V_k
+      -\frac{2\beta\alpha^2\sigma^2}{b}.
+\]
+With $\beta=\eta/\alpha$ the $V_k$-coefficient equals $\eta/2\ge0$, and
+\eqref{eq:vr-drift-batch} makes the $S_k$-coefficient at least $a'_\eta/2\ge0$;
+the three leading terms are nonnegative, giving
+$\Phi_k-\Phi_{k+1}\ge-2\beta\alpha^2\sigma^2/b$. Summing over $k=0,\dots,K-1$,
+using $\Phi_K\ge0$ and $\Phi_0=\Delta_0+\beta V_0$, and dropping the nonnegative
+$\delta_g$- and $S_k$-sums,
+\[
+    \tfrac\eta2\sum_{k=0}^{K-1}V_k
+    \le\Delta_0+\beta V_0+\frac{2K\beta\alpha^2\sigma^2}{b}.
+\]
+Dividing by $\tfrac\eta2 K$ and substituting $\beta=\eta/\alpha$, $\eta=1/(2L_f)$
+yields \eqref{eq:vr-variance-bound}. Parts (a),(b) read off the three terms; in
+(b), $b=4/\alpha$ makes the floor $4\alpha\sigma^2/b=\alpha^2\sigma^2$, and
+$\alpha=\Theta(\eps/\sigma)$ sends it to $O(\eps^2)$ while
+$K\cdot b=\Theta(L_f\Delta_0/\eps^2)\cdot\Theta(\sigma/\eps)$.
+\end{proof}
+
+We stress that \eqref{eq:vr-variance-bound} is the strongest self-contained
+conclusion the coupling yields: the $O(\eps^{-3})$ total in part (b) follows from
+the $\eps$-tied scaling $\alpha=\Theta(\eps/\sigma)$, $b=\Theta(\sigma/\eps)$
+rather than from a constant-batch telescope, and in that regime it coincides with
+the online MVR rate of \citet{chayti2025stochastic}.
+
+\begin{remark}[Existing stochastic-DC rates on the two-sided certificate]
+\label{rem:vr-relationship}
+The realization \Cref{lem:stoch-ps-dca-realization} places existing
+stochastic-DC guarantees on the single template of \Cref{cor:stoch-ps-dca-rate},
+so their $\eps$-dependence is read off the mismatch slot alone. DCA-PAGE
+\citep{nguyen2025improved} reports $O(N+\sqrt N\,\eps^{-2})$ in the finite-sum
+regime and $O(b+\sqrt b\,\eps^{-2})$ online, measured in a one-sided gap; MDCA
+\citep{chayti2025stochastic} reports $O(\sigma^2\eps^{-4})$ with a Polyak
+estimator and $O(\sigma\eps^{-3})$ with an MVR estimator under averaged
+smoothness, in a critical-distance measure. Up to the square-root unit change
+between value-typed gaps and the norm-typed residual, these are exactly the
+$\eps$-slot rates of \Cref{cor:vr-sgd-rate,prop:vr-reduced-rate}, with
+$\delta_g=O(\eps^2)$ riding free in the second slot. \Cref{rem:two-power} names
+the mechanism: the estimator error surfaces as $\sqrt{\bar V}$ in the mismatch
+slot but only as $\tfrac\eta2\bar V$ in $\delta_\phi,\delta_g$, so the
+$\sqrt{\bar V}$ term governs $\eps$. A bounded-variance oracle shrinks it only
+through $\bar V\le\sigma^2/b$, forcing $b=\Theta(\sigma^2/\eps^2)$ per step and
+the $O(\eps^{-4})$ total; a variance-reduced oracle instead couples $\bar V$ to
+the drift and amortizes it across iterations, which is what separates the
+$O(\eps^{-3})$ rate from the bounded-variance $O(\eps^{-4})$ one.
+\end{remark}
+
+\subsection{Smoothing the concave side}
+\label{subsec:stoch-smoothing}
+
+A third template smooths the nonsmooth part instead of linearizing it,
+and it is the closest of our methods to the single-loop momentum scheme
+of \citet{chayti2025stochastic}. Fix $\mu>0$, replace $g$ by its Moreau
+envelope $g_\mu$ from \eqref{eq:moreau-envelope}, and run one stochastic
+prox-gradient step per iteration,
+\begin{equation}
+    \bx^{k+1}
+    =\prox_{\eta h}\!\bigl(\bx^k-\eta(\bd^k-\nabla g_\mu(\bx^k))\bigr),
+    \qquad
+    \nabla g_\mu(\bx^k)=\tfrac1\mu\bigl(\bx^k-\prox_{\mu g}(\bx^k)\bigr).
+    \label{eq:stoch-smoothing-step}
+\end{equation}
+Because $g_\mu$ is $1/\mu$-smooth and deterministic, its gradient is
+exact, so the only stochastic object is again $\bd^k$. The surrogate
+$F_\mu:=f+h-g_\mu$ is $(L_f+1/\mu)$-smooth, and the smoothing route of
+\Cref{sec:smoothing-certificate} identifies stationarity of $F_\mu$ with a
+$(\,0,\,O(\mu),\,\eps\,)$-certificate of the original $F$: the positive
+side stays exact, and the smoothing bias enters only the negative-side
+tolerance at scale $O(\mu)$.
+
+The distinctive feature here is that the convex side carries no stochastic
+noise. In the single-loop smoothed method of \citet{chayti2025stochastic},
+the inner step draws a stochastic gradient of the convex-side term, whose
+irreducible variance $M^2$ forces the $O(\eps^{-4})$ rate regardless of
+variance reduction on the concave-side estimator. In our model $h$ and $g$
+are deterministic, so $M=0$ and that obstruction is absent. This suggests
+the variance-reduced instantiation should reach $O(\eps^{-3})$; the open
+point is whether the surrogate smoothness $L_\mu=L_f+1/\mu$, once $\mu$ is
+tied to the target accuracy, re-enters the step-size budget.
+
+\begin{proposition}[Smoothed single-loop certificate; rate conjectural]
+\label{prop:stoch-smoothing-rate}
+Let $f$ be $L_f$-smooth convex and $h,g$ be deterministic proper closed
+convex, and run~\eqref{eq:stoch-smoothing-step} with
+$\eta\le 1/(L_f+1/\mu)$. Then the certificate machinery of
+\Cref{lem:stoch-ps-dca-realization,cor:stoch-ps-dca-rate} applies to
+$F_\mu$ and returns, for the original $F$, a $(\,0,\,O(\mu),\,\eps\,)$-critical
+point in expectation whose mismatch $\eps$ obeys the averaged-error budget
+of \Cref{cor:stoch-ps-dca-rate}. A bounded-variance oracle therefore
+attains $O(\eps^{-4})$. At the criticality-tied schedule $\mu=\Theta(\eps)$,
+and provided the $L_\mu$-dependence does not re-enter the
+drift-domination condition~\eqref{eq:vr-drift-batch}, the variance-reduced
+instantiation attains $O(\eps^{-3})$. We state the variance-reduced rate
+as a \emph{conjecture}: the noise-free convex side removes the $M^2$
+obstruction of \citet{chayti2025stochastic}, but a full Lyapunov analysis
+tracking $L_\mu=L_f+1/\mu$ under $\mu=\Theta(\eps)$ remains to be carried
+out.
+\end{proposition}
+
+Smoothing $g$ also resolves the incomparability left open in
+\Cref{subsec:cert-comparison}: with $g_\mu$ smooth the decomposition is
+\emph{faithful}, and both the convex-side and concave-side certificates
+project onto the same decomposition-free stationarity of $F$.
+
+\begin{corollary}[Decomposition-free Clarke readout]
+\label{cor:decomp-free-clarke}
+Suppose the returned point $\bar\bx$ is faithful, i.e.\ $g$ (or its
+smoothing $g_\mu$) is differentiable at $\bar\bx$, so that
+$\partial_C F(\bar\bx)=\partial\phi(\bar\bx)-\nabla g(\bar\bx)
+=\partial\Phi(\bar\bx)-\nabla G(\bar\bx)$. Then the convex-side certificate
+$(\,0,\delta_g,\eps)$ and the concave-side certificate $(\,0,\delta_G,\eps)$
+of the same iterate both yield
+\[
+    \operatorname{dist}\!\bigl(\zero,\partial_C F(\bar\bx)\bigr)
+    \ \le\
+    \eps+\sqrt{2L_\bullet\,\delta_\bullet},
+\]
+with $(L_\bullet,\delta_\bullet)=(L_g,\delta_g)$ on the convex side and
+$(L_\bullet,\delta_\bullet)=(L_G,\delta_G)$, $L_G\le\rho+L_f+L_g$, on the
+concave side. At the $\eps$-tied schedule both give
+$\operatorname{dist}(\zero,\partial_C F(\bar\bx))=O(\eps)$ at $O(\eps^{-3})$
+oracle cost; the convex-side constant is the smaller of the two. Without
+faithfulness no such reduction exists
+(\Cref{ex:goldstein-counterexample}), so the two certificates are
+genuinely incomparable rather than one dominating the other.
+\end{corollary}
+
+\begin{proof}
+Since $g$ is $L_g$-smooth at $\bar\bx$, $g^*$ is $1/L_g$-strongly convex,
+so $\Phi_g(\bar\bx,\bv)\ge\tfrac1{2L_g}\norm{\bv-\nabla g(\bar\bx)}^2$;
+applied to $\bv\in\partial_{\delta_g}g(\bar\bx)$ this gives
+$\norm{\bv-\nabla g(\bar\bx)}\le\sqrt{2L_g\delta_g}$. With
+$\bu\in\partial\phi(\bar\bx)$ and $\norm{\bu-\bv}\le\eps$, the triangle
+inequality together with $\bu-\nabla g(\bar\bx)\in\partial_C F(\bar\bx)$
+gives the convex-side bound. The concave-side bound is identical with $G$
+in place of $g$, using $\nabla G=\rho\bx-\nabla f+\nabla g$ and hence
+$L_G\le\rho+L_f+L_g$. The schedule substitution uses
+$\delta_g,\delta_G=O(\eps^2)$ from
+\Cref{cor:stoch-ps-dca-rate,prop:vr-reduced-rate} and
+\eqref{eq:cert-bregman-gap}.
+\end{proof}
+

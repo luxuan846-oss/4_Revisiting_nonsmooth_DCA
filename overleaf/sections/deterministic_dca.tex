@@ -1,0 +1,1642 @@
+\section{Complexity Analysis of Deterministic DCA}
+\label{sec:complexity-analysis-DCA}
+
+This section establishes the iteration complexity of DCA-type methods for
+reaching a $(\delta_\phi,\delta_g,\varepsilon)$-critical point of
+$F=\phi-g$, without imposing smoothness on $g$. We analyze three
+algorithmic templates against this single certificate: (1) exact and inexact
+DCA, which solve the strongly convex subproblem to full or controlled accuracy;
+(2) proximal DCA, which replaces that solve by a single proximal-subgradient
+step; and (3) concave-side smoothing.
+% , which, rather than a new method, is
+shown to reproduce the same certificate the other two attain. 
+% Two devices
+% recur throughout, a strong-convexity reformulation that is without loss
+% of generality (\Cref{ass:strong-convexity-dc}) and a Fenchel-gap toolkit
+% that turns each subproblem's optimality into a transported tolerance. 
+
+\begin{algorithm}[tbp]
+    \caption{\textbf{(In)exact DCA}}
+    \label{alg: DCA}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} Initial point $\bx^0\in\dom \phi $,
+        inner solver tolerance $\{\epsilon_k\}_{k=0}^{K-1}$,
+        stepsize $\eta$.
+        \FOR{$k=0,1,\ldots,K-1$}
+            \STATE Compute $\bv^k \in \partial g(\bx^k)$.
+            \STATE 
+            Solve inner strongly convex subproblem:
+
+            \STATE $\triangleright$ \textbf{Option I:} exact subproblem solve
+            \begin{align}
+            \label{eq:dca-exact-step}
+            \bx^{k+1} = \argmin\limits_{\bx \in \RR^n } \{ \phi (\bx)- \langle \bv^k, \bx \rangle \} 
+            \end{align}
+
+            \STATE $\triangleright$ \textbf{Option II:} inexact inner solve
+            \begin{align}
+            \label{eq:dca-inner-solver-step}
+            \bx^{k+1}
+            =
+            \mathcal S_{\mathcal A_k}(\bx^k,\bv^k;\Theta_k),
+            \end{align}
+            where $\mathcal S_{\mathcal A_k}$ denotes the inner solver selected
+            by $\mathcal A_k$, and $\Theta_k$ collects its parameters and
+            stopping tolerance.
+        \ENDFOR
+        \STATE {\bfseries Output:} $\hat\bx$, chosen uniformly from
+        $\{\bx^k\}_{k=0}^{K-1}$.
+    \end{algorithmic}
+\end{algorithm} 
+
+We use the unified DCA summarized in Algorithm~\ref{alg: DCA}. At the
+$k$-th iteration, DCA computes a subgradient $\bv^k \in \partial g(\bx^k)$
+and solves a $\gamma$-strongly convex subproblem to obtain $\bx^{k+1}$
+(Option I). Option II is an abstract inexact inner-solver interface:
+\Cref{alg:inexact-dca-inner} gives one realization, in which the convex
+subproblem is solved to value accuracy by an inner first-order method,
+and other inner-loop algorithms can be used as long as their output
+satisfies the inexact certificate required in the analysis below.
+
+Before analyzing the complexity of DCA, we first introduce the main
+assumptions used throughout the section.
+
+\subsection{Main Assumption}
+Assume that $F$ is bounded below on $\operatorname{dom}\phi$, and denote
+\[
+F^\star:=\inf\limits_x F(x)>-\infty,
+\qquad
+\Delta_0:=F(\bx^0)-F^\star > 0.
+\]
+For any $\gamma>0$, $F$ admits the reformulation
+\[
+F = \Big(\phi+\tfrac{\gamma}{2}\|\bx\|^2\Big) - \Big(\tfrac{\gamma}{2}\|\bx\|^2+g\Big),
+\]
+so WLOG we take $\phi$ and $g$ to be $\gamma$-strongly convex, formalized as follows.
+
+\begin{assumption}
+\label{ass:strong-convexity-dc}
+The functions $\phi$ and $g$ are strongly convex for some constant
+$\gamma>0$, and $g$ has bounded subgradients:
+$\sup\limits_{\bx}\sup\limits_{\bv\in\partial g(\bx)}\|\bv\|\le G$.
+\end{assumption}
+
+% We also take $\Delta_0>0$ WLOG: if $\Delta_0=0$, then $\bx^0$ is a global
+% minimizer of $F$, so for any $\bv\in\partial g(\bx^0)$ and all $\bx$,
+% \[
+%     \phi(\bx)
+%     \;\ge\;
+%     g(\bx)+F(\bx^0)
+%     \;\ge\;
+%     g(\bx^0)+\langle\bv,\bx-\bx^0\rangle+F(\bx^0)
+%     \;=\;
+%     \phi(\bx^0)+\langle\bv,\bx-\bx^0\rangle,
+% \]
+% i.e., $\bv\in\partial\phi(\bx^0)\cap\partial g(\bx^0)$, so $\bx^0$ is already
+% $(0,0,0)$-critical and the analysis is vacuous.
+Our goal is to characterize the iteration complexity of DCA-type methods, without imposing smoothness on $g$, for reaching a $(\delta_\phi,\delta_g,\varepsilon)$-critical
+point. As discussed below, the three parameters play distinct roles in this analysis:
+$\varepsilon$ controls the residual mismatch between the approximate dual
+vectors of $\phi$ and $g$, while $\delta_\phi$ and $\delta_g$ control how
+loosely each convex component's Fenchel--Young gap is allowed to vanish.
+
+\subsection{Common Auxiliary Lemmas}
+% In particular, $\delta_\phi$ coincides with the primal optimality gap of the
+% convex subproblem solved at each DCA iteration,
+% \[
+%     \min\limits_{\bx}\ \phi(\bx)-\langle \bv^k,\bx\rangle,
+% \]
+% evaluated at the returned iterate $\bx^{k+1}$. If the subproblem is solved to
+% global optimality (an exact oracle), then $\Phi_\phi(\bx^{k+1},\bv^k)=0$,
+% i.e., $\delta_\phi=0$; if it is solved only approximately -- e.g., by a fixed
+% budget of inner first-order steps -- then $\delta_\phi>0$, and its magnitude
+% is precisely the residual primal gap left by the inner solver. Exact
+% subproblem solution therefore recovers the stronger regime $\delta_\phi=0$,
+% in which $\delta_g$ remains the only source of inexactness, reflecting its
+% structural rather than computational origin.
+
+The next lemma is the pivot of the analysis, which shows that the $\phi$-side Fenchel gap $\Phi_\phi$ is at any candidate point equals the value suboptimality of that
+point for the current convex subproblem. Consequently, the parameter
+$\delta_\phi$ of \Cref{def:delta-eps-critical} coincides, exactly and
+without slack, with the accuracy to which the subproblem is solved.
+
+\begin{lemma}
+\label{lem:dca-subproblem-value}
+Let \Cref{ass:strong-convexity-dc} hold, $\bar\bx\in\dom\phi$,
+$\bv\in\partial g(\bar\bx)$, and define
+$P(\bx):=\phi(\bx)-\langle\bv,\bx\rangle$. Then the following statements
+hold.
+\begin{enumerate}
+    \item[(i)] $\inf\limits_{\bx\in\RR^n}P(\bx)\ge
+    F^\ast+g(\bar\bx)-\langle\bv,\bar\bx\rangle>-\infty$, and
+    $\phi^*(\bv)=-\inf\limits_{\bx\in\RR^n}P(\bx)\in\RR$.
+    \item[(ii)] For every $\by\in\dom\phi$, the following holds
+    \[
+        \Phi_\phi(\by,\bv)
+        \;=\;
+        P(\by)-\inf\limits_{\bx\in\RR^n}P(\bx).
+    \]
+    \item[(iii)] For every $\sigma\ge0$ and every $\by\in\dom\phi$, the
+    following three statements are equivalent:
+    \[
+        \text{(a) }P(\by)\le\inf\limits_{\bx\in\RR^n}P(\bx)+\sigma;
+        \qquad
+        \text{(b) }\Phi_\phi(\by,\bv)\le\sigma;
+        \qquad
+        \text{(c) }\bv\in\partial_\sigma\phi(\by).
+    \]
+    In particular, $\by\in\argmin\limits_{\bx\in\RR^n}P(\bx)$ if and only if
+    $\bv\in\partial\phi(\by)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) Since $\bar\bx\in\dom\phi\subseteq\dom g$ and
+$\bv\in\partial g(\bar\bx)$, the subgradient inequality gives
+\begin{equation}
+    g(\bx)\;\ge\;g(\bar\bx)+\langle\bv,\bx-\bar\bx\rangle
+    \qquad\text{for all }\bx\in\RR^n,
+    \label{eq:g-subgrad-at-xbar}
+\end{equation}
+equivalently
+$\langle\bv,\bx\rangle\le g(\bx)-g(\bar\bx)+\langle\bv,\bar\bx\rangle$
+for all $\bx\in\RR^n$. Hence, for every $\bx\in\dom\phi\subseteq\dom g$,
+\[
+    P(\bx)
+    \;=\;
+    \phi(\bx)-\langle\bv,\bx\rangle
+    \;\ge\;
+    \phi(\bx)-g(\bx)+g(\bar\bx)-\langle\bv,\bar\bx\rangle
+    \;=\;
+    F(\bx)+g(\bar\bx)-\langle\bv,\bar\bx\rangle
+    \;\ge\;
+    F^\ast+g(\bar\bx)-\langle\bv,\bar\bx\rangle,
+\]
+while $P(\bx)=+\infty$ for $\bx\notin\dom\phi$. Since $g(\bar\bx)\in\RR$,
+the claimed lower bound follows, and it is finite. Furthermore,
+$P(\bar\bx)=\phi(\bar\bx)-\langle\bv,\bar\bx\rangle<+\infty$, so
+$\inf\limits P\in\RR$. By the definition of the Fenchel conjugate,
+\[
+    \phi^*(\bv)
+    \;=\;
+    \sup\limits_{\bx\in\RR^n}\bigl\{\langle\bv,\bx\rangle-\phi(\bx)\bigr\}
+    \;=\;
+    -\inf\limits_{\bx\in\RR^n}\bigl\{\phi(\bx)-\langle\bv,\bx\rangle\bigr\}
+    \;=\;
+    -\inf\limits_{\bx\in\RR^n}P(\bx)\;\in\;\RR .
+\]
+
+(ii) For $\by\in\dom\phi$, using (i),
+\[
+    \Phi_\phi(\by,\bv)
+    \;=\;
+    \phi(\by)+\phi^*(\bv)-\langle\bv,\by\rangle
+    \;=\;
+    P(\by)+\phi^*(\bv)
+    \;=\;
+    P(\by)-\inf\limits_{\bx\in\RR^n}P(\bx).
+\]
+
+(iii) The equivalence of (a) and (b) is immediate from (ii). The
+equivalence of (b) and (c) is \Cref{lem:fenchel-gap-toolkit} applied to
+$h=\phi$. The final claim is the case $\sigma=0$.
+\end{proof}
+
+
+The following identity decomposes the per-iteration decrease of $F$
+into three nonnegative quantities that together constitute a
+$(\delta_\phi,\delta_g,\eps)$-point. It holds for an arbitrary
+candidate $\bx^{k+1}$, regardless of how it is produced, and therefore
+serves as the common engine underlying both the exact and the
+inexact analyses.
+
+\begin{lemma}[One-step decomposition identity]
+\label{lem:dca-one-step-identity}
+Suppose \Cref{ass:strong-convexity-dc} holds. For any
+$\bx^k,\bx^{k+1}\in\dom\phi$ and any $\bv^k\in\partial g(\bx^k)$, it holds that
+\begin{equation}
+    F(\bx^{k+1})-F(\bx^k)
+    \;=\;
+    \Phi_\phi(\bx^{k+1},\bv^k)
+    \;-\;
+    \Phi_\phi(\bx^k,\bv^k)
+    \;-\;
+    \Phi_g(\bx^{k+1},\bv^k).
+    \label{eq:dca-one-step-identity}
+\end{equation}
+% where
+% \[
+%     \Phi_\phi(\bx^k,\bv^k)\ge0,
+%     \qquad
+%     \Phi_\phi(\bx^{k+1},\bv^k)\ge0,
+%     \qquad
+%     \Phi_g(\bx^{k+1},\bv^k)\ge0.
+% \]
+\end{lemma}
+
+\begin{proof}
+By the Fenchel--Young equality, i.e.,  for any 
+\begin{equation}
+    g^*(\bv^k)
+    \;=\;
+    \langle\bv^k,\bx^k\rangle-g(\bx^k)
+    \;\in\;\RR,
+    \label{eq:fenchel-young-equality-g}
+\end{equation} and 
+ssubstituting \eqref{eq:fenchel-young-equality-g} into the definition of
+$\Phi_g$ gives
+\begin{equation}
+    \Phi_g(\bx^{k+1},\bv^k)
+    \;=\;
+    g(\bx^{k+1})+g^*(\bv^k)-\langle\bv^k,\bx^{k+1}\rangle
+    \;=\;
+    g(\bx^{k+1})-g(\bx^k)-\langle\bv^k,\bx^{k+1}-\bx^k\rangle.
+    \label{eq:g-gap-bregman-form}
+\end{equation}
+
+On the other hand, rearranging the terms in the definition of
+$\Phi_\phi$ yields
+\[
+    \Phi_\phi(\bx^k,\bv^k)-\Phi_\phi(\bx^{k+1},\bv^k)
+    \;=\;
+    \bigl[\phi(\bx^k)-\langle\bv^k,\bx^k\rangle\bigr]
+    -\bigl[\phi(\bx^{k+1})-\langle\bv^k,\bx^{k+1}\rangle\bigr].
+\]
+
+Adding \eqref{eq:g-gap-bregman-form} to the above equality yields
+\[
+    \Phi_\phi(\bx^k,\bv^k)-\Phi_\phi(\bx^{k+1},\bv^k)
+    +\Phi_g(\bx^{k+1},\bv^k)
+    \;=\;
+    \bigl[\phi(\bx^k)-g(\bx^k)\bigr]
+    -\bigl[\phi(\bx^{k+1})-g(\bx^{k+1})\bigr]
+    \;=\;
+    F(\bx^k)-F(\bx^{k+1}),
+\]
+which completes the proof.
+\end{proof}
+By
+\Cref{lem:dca-subproblem-value}\,(ii)--(iii), the quantity
+$\Phi_\phi(\bx^{k+1},\bv^k)$ is the value inaccuracy of the subproblem
+solve and populates the $\delta_\phi$-slot of the certificate at
+$\bx^{k+1}$; the quantity $\Phi_g(\bx^{k+1},\bv^k)$ populates the
+$\delta_g$-slot at $\bx^{k+1}$; and the quantity $\Phi_\phi(\bx^k,\bv^k)$
+populates the $\delta_\phi$-slot of a second certificate anchored at
+$\bx^k$, where the $g$-side is exact because $\Phi_g(\bx^k,\bv^k)=0$. The
+objective decrease per iteration equals the sum of the two certificate
+budgets minus the injected inexactness. In the exact regime the injected
+inexactness vanishes and the identity strengthens the classical monotone
+descent property of DCA \citep{lethi2009dc,abbaszadehpeivasti2023rate}
+into an exact accounting of where the descent goes.
+
+\subsection{Iteration Complexity of DCA-type Methods}
+We translate the one-step identity above into finite-time complexity
+bounds. We first treat exact DCA, where each convex subproblem is solved
+exactly. We then analyze inexact DCA by separating the outer certificate
+bound from the inner first-order cost.
+
+\paragraph{Complexity analysis of Exact DCA.} We first analyze the complexity of DCA in \Cref{alg: DCA} with \emph{Option I}, meaning that each subproblem is solved exactly. By \Cref{lem:dca-subproblem-value}\,(ii)--(iii), the update
+\eqref{eq:dca-exact-step} is equivalent to
+\begin{equation}
+    \Phi_\phi(\bx^{k+1},\bv^k)=0,
+    \qquad\text{that is,}\qquad
+    \bv^k\in\partial\phi(\bx^{k+1}).
+    \label{eq:dca-exact-optimality}
+\end{equation}
+
+\begin{theorem}[Iteration Complexity of Exact DCA]
+\label{thm:dca-exact-complexity}
+Suppose \Cref{ass:strong-convexity-dc} holds. Let $\bx^0\in\dom\phi$ and
+$\{\bx^k\}_{k\ge0}$ be generated by \Cref{alg: DCA} with \emph{Option I}.
+Given $\delta_g>0$, DCA returns a point $\bar{\bx}\in\{\bx^1,\ldots,\bx^K\}$
+satisfying $(0,\delta_g,0)$-critical within
+$K=\mathcal O(\Delta_0 \delta_g^{-1})$ iterations.
+\end{theorem}
+
+\begin{proof}
+Substituting the exact optimality condition~\eqref{eq:dca-exact-optimality}
+into the one-step identity~\eqref{eq:dca-one-step-identity} gives, for
+every $k\ge0$,
+\begin{equation}
+    F(\bx^k)-F(\bx^{k+1})
+    \;=\;
+    \Phi_\phi(\bx^k,\bv^k)+\Phi_g(\bx^{k+1},\bv^k)
+    \;\ge\;0,
+    \label{eq:dca-exact-descent}
+\end{equation}
+Summing~\eqref{eq:dca-exact-descent} over $k=0,\ldots,K-1$
+and using $F(\bx^K)\ge F^\star$, we obtain
+\[
+    \frac1K\sum_{k=0}^{K-1}
+    \Bigl[
+        \Phi_\phi(\bx^k,\bv^k)+\Phi_g(\bx^{k+1},\bv^k)
+    \Bigr]
+    \;\le\;
+    \frac{\Delta_0}{K}.
+\] where defining
+\[
+    k^*:=\argmin_{0\le k\le K-1}
+    \Bigl[
+        \Phi_\phi(\bx^k,\bv^k)+\Phi_g(\bx^{k+1},\bv^k)
+    \Bigr]
+\]
+yields
+\[
+    \Phi_\phi(\bx^{k^*},\bv^{k^*})+\Phi_g(\bx^{k^*+1},\bv^{k^*})
+    \;\le\;\frac{\Delta_0}{K}.
+\]
+Because both summands are nonnegative, each is individually bounded by
+their sum, implying
+\begin{equation}
+    \Phi_g(\bx^{k^*+1},\bv^{k^*})\;\le\;\frac{\Delta_0}{K}.
+    \label{eq:dca-exact-individual-bound}
+\end{equation}
+Then, we set $\bu=\bv:=\bv^{k^*}$. Combining
+\eqref{eq:dca-exact-optimality} with the optimality condition that $\bv^{k^*}\in\partial\phi(\bx^{k^*+1})\cap\partial g(\bx^k)$, we obtain $\bu\in\partial\phi(\bx^{k^*+1})$. By
+\eqref{eq:dca-exact-individual-bound} together with
+\Cref{lem:fenchel-gap-toolkit}, $\bv\in\partial_{\Delta_0/K}g(\bx^{k^*+1})$.
+Hence the following holds
+\[
+    \operatorname{dist}
+    \Bigl(
+        \partial_{0}\phi(\bx^{k^*+1}),\,
+        \partial_{\Delta_0/K}\,g(\bx^{k^*+1})
+    \Bigr)
+    \;\le\;
+    \|\bu-\bv\|
+    \;=\;
+    0,
+\] i.e., $\bx^{k^*+1}$ is $(0,\Delta_0/K,0)$-critical. Choosing $K=\lceil\Delta_0/\delta_g\rceil$ gives $\Delta_0/K\le\delta_g$.
+Taking $\bar\bx:=\bx^{k^*+1}$ completes the proof.
+\end{proof}
+
+\blue{
+\begin{remark}[Tightness under smooth oracle]
+\label{rem:tightness-dimension}
+\begin{itemize}
+    \item \emph{Matching lower bound.} The rate of
+    \Cref{thm:dca-exact-complexity} is tight up to the condition number
+    $L/\gamma$: embedding the smooth hard instance of
+    \citet{carmon2020lower} as the DC pair
+    $\phi=\hat F+\tfrac{L}{2}\|\cdot\|^2$ and
+    $g=\tfrac{L}{2}\|\cdot\|^2$ renders the component-wise DC oracle
+    informationally equivalent to a standard first-order oracle, and
+    yields a lower bound of
+    $\Omega(\gamma L^{-1}\Delta\delta^{-1})$ oracle calls for reaching a
+    $(0,\delta_g,\varepsilon)$-critical point with 
+    $\delta_g=O(\gamma\varepsilon^2/L^2)$;  see \Cref{Appendix: lower bound of DCA}.
+
+    % \item \emph{Dimension.} The embedded instance inherits the zero-chain
+    % dimension $d=\Theta(\Delta L\varepsilon^{-2})$ of
+    % \citet{carmon2020lower}; the bound itself is dimension-free. In
+    % contrast, the one-dimensional barrier construction of
+    % \Cref{thm:dc-oracle-limitation-sketch} trades dimension for component
+    % growth $G_K=O(KL)$.
+
+    \item \emph{Relation to classical measures.} When $g$ is
+    $L_g$-smooth, $\delta_g$ and the same-point residual $\varepsilon$
+    are explicitly inter-convertible with constant $L_g^2/\gamma$, so
+    $O(\Delta\delta^{-1})$ recovers the classical
+    $O(\varepsilon^{-2})$ rate; when $g$ is nonsmooth this equivalence
+    provably fails, as the classical target is finite-time unattainable
+    (\Cref{thm:dc-oracle-limitation-sketch}).
+    % see \Cref{rem:smooth-conversion}.
+\end{itemize}
+\end{remark}}
+
+
+\paragraph{Complexity Analysis of Inexact DCA} 
+
+\begin{algorithm}[tbp]
+    \caption{\textbf{Inexact DCA}}
+    \label{alg:inexact-dca-inner}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} Starting point $\bx^0\in\dom\phi$,
+        tolerances $\{\sigma_k\}_{k\ge0}$.
+        \FOR{$k=0,1,2,\ldots$}
+            \STATE Choose $\bv^k\in\partial g(\bx^k)$.
+            \STATE Define the convex subproblem
+            \[
+                P_k(\bx):=\phi(\bx)-\langle\bv^k,\bx\rangle .
+            \]
+            \STATE Starting from $\by^0=\bx^k$, run an inner first-order
+            method to find $\by^{J_k}$ satisfying
+            \begin{equation}
+                P_k(\by^{J_k})
+                \le
+                \inf_{\bx\in\RR^n}P_k(\bx)+\sigma_k .
+                \label{eq:dca-inexact-value-step}
+            \end{equation}
+            \STATE Set $\bx^{k+1}:=\by^{J_k}$.
+        \ENDFOR
+        \STATE {\bfseries Output:} $\{\bx^k\}_{k\ge0}$.
+    \end{algorithmic}
+\end{algorithm}
+
+We now analyze the complexity of DCA with inexact subproblem solves, as
+formalized in \Cref{alg:inexact-dca-inner}. This setting models the
+practical situation in which the convex subproblem is solved by an
+iterative method and terminated early \citep{yao2022large}. When
+$\sigma_k=0$, condition \eqref{eq:dca-inexact-value-step} reduces to
+\eqref{eq:dca-exact-step}.
+
+\begin{lemma}
+\label{lem:dca-inexact-complexity}
+Suppose \Cref{ass:strong-convexity-dc} holds. Let
+$\{\bx^k\}_{k\ge0}$ be generated by DCA with tolerances
+$\{\sigma_k\}_{k\ge0}\subset[0,+\infty)$. Then the following statements
+hold.
+\begin{enumerate}
+    \item[(i)] For every $k\ge0$, it holds that
+    \[
+        \Phi_\phi(\bx^{k+1},\bv^k)\;\le\;\sigma_k,
+        \qquad\text{equivalently,}\qquad
+        \bv^k\in\partial_{\sigma_k}\phi(\bx^{k+1}).
+    \]
+    \item[(ii)] For every integer $K\ge1$, it holds that
+    \begin{equation}
+        \sum_{k=0}^{K-1}
+        \Bigl[
+            \Phi_\phi(\bx^k,\bv^k)
+            +\Phi_g(\bx^{k+1},\bv^k)
+        \Bigr]
+        \;\le\;
+        \Delta_0+\sum_{k=0}^{K-1}\sigma_k .
+        \label{eq:dca-inexact-telescope}
+    \end{equation} Moreover, if  $\sigma_k\equiv\sigma\ge0$ for all $k$, then there exists $k^*\in\{0,1,\ldots,K-1\}$ such that
+    \begin{equation}
+        \Phi_\phi(\bx^{k^*},\bv^{k^*})
+        +\Phi_g(\bx^{k^*+1},\bv^{k^*})
+        \;\le\;
+        \frac{\Delta_0}{K}+\sigma,
+        \label{eq:dca-inexact-best-index}
+    \end{equation} i.e.,  $\bx^{k^*+1}$ is a
+        $\bigl(\sigma,\ \Delta_0/K+\sigma,\ 0\bigr)$-critical point.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) Fix $k\ge0$. By \Cref{alg:inexact-dca-inner}, the iterate
+$\bx^{k+1}$ satisfies the value-inexactness condition
+\eqref{eq:dca-inexact-value-step} for the subproblem
+$P_k(\bx)=\phi(\bx)-\langle\bv^k,\bx\rangle$. Applying
+\Cref{lem:dca-subproblem-value}\,(iii) with
+$\bar\bx=\bx^k$, $\bv=\bv^k$, $\by=\bx^{k+1}$, and
+$\sigma=\sigma_k$ gives
+\[
+    \Phi_\phi(\bx^{k+1},\bv^k)\le\sigma_k
+    \qquad\Longleftrightarrow\qquad
+    \bv^k\in\partial_{\sigma_k}\phi(\bx^{k+1}).
+\]
+This proves (i).
+
+(ii) Substituting the bound in (i) into the one-step identity
+\eqref{eq:dca-one-step-identity} yields, for every $k\ge0$,
+\begin{equation}
+    F(\bx^k)-F(\bx^{k+1})
+    \;=\;
+    \Phi_\phi(\bx^k,\bv^k)
+    -\Phi_\phi(\bx^{k+1},\bv^k)
+    +\Phi_g(\bx^{k+1},\bv^k)
+    \;\ge\;
+    \Phi_\phi(\bx^k,\bv^k)
+    +\Phi_g(\bx^{k+1},\bv^k)
+    -\sigma_k .
+    \label{eq:dca-inexact-descent}
+\end{equation}
+Summing~\eqref{eq:dca-inexact-descent} over $k=0,\ldots,K-1$
+and using $F(\bx^K)\ge F^\star$, we obtain
+\[
+    \sum_{k=0}^{K-1}
+    \Bigl[
+        \Phi_\phi(\bx^k,\bv^k)+\Phi_g(\bx^{k+1},\bv^k)
+    \Bigr]
+    \;\le\;
+    F(\bx^0)-F(\bx^K)+\sum_{k=0}^{K-1}\sigma_k
+    \;\le\;
+    \Delta_0+\sum_{k=0}^{K-1}\sigma_k,
+\]
+which proves \eqref{eq:dca-inexact-telescope}.
+
+If $\sigma_k\equiv\sigma$, then the right-hand side of
+\eqref{eq:dca-inexact-telescope} equals $\Delta_0+K\sigma$. Define
+\[
+    k^*
+    :=
+    \argmin_{0\le k\le K-1}
+    \Bigl[
+        \Phi_\phi(\bx^k,\bv^k)+\Phi_g(\bx^{k+1},\bv^k)
+    \Bigr].
+\]
+Then
+\[
+    \Phi_\phi(\bx^{k^*},\bv^{k^*})
+    +\Phi_g(\bx^{k^*+1},\bv^{k^*})
+    \;\le\;
+    \frac{\Delta_0}{K}+\sigma,
+\]
+which is \eqref{eq:dca-inexact-best-index}. Since
+$\Phi_\phi(\bx^{k^*},\bv^{k^*})\ge0$, the same bound gives
+\[
+    \Phi_g(\bx^{k^*+1},\bv^{k^*})
+    \;\le\;
+    \frac{\Delta_0}{K}+\sigma .
+\]
+Part (i) gives
+$\bv^{k^*}\in\partial_\sigma\phi(\bx^{k^*+1})$, while
+\Cref{lem:fenchel-gap-toolkit} gives
+\[
+    \bv^{k^*}\in
+    \partial_{\Delta_0/K+\sigma}g(\bx^{k^*+1}).
+\]
+Taking $\bu=\bv=\bv^{k^*}$, we obtain
+\[
+    \operatorname{dist}
+    \Bigl(
+        \partial_{\sigma}\phi(\bx^{k^*+1}),\,
+        \partial_{\Delta_0/K+\sigma}g(\bx^{k^*+1})
+    \Bigr)
+    \;\le\;
+    \|\bu-\bv\|
+    \;=\;
+    0.
+\]
+Hence $\bx^{k^*+1}$ is
+$\bigl(\sigma,\Delta_0/K+\sigma,0\bigr)$-critical, completing the proof.
+\end{proof}
+
+\begin{theorem}[First-order Complexity of Inexact DCA]
+\label{cor:dca-inexact-target}
+Suppose \Cref{ass:strong-convexity-dc} holds. Let
+$\{\bx^k\}_{k\ge0}$ be generated by \Cref{alg:inexact-dca-inner} with the
+constant tolerance
+\[
+    \sigma_k\equiv\sigma_\star
+    :=
+    \min\{\delta_\phi,\theta\delta_g\},
+    \qquad
+    \theta\in(0,1),
+\]
+where $\delta_\phi,\delta_g>0$. Then DCA returns a
+$(\delta_\phi,\delta_g,0)$-critical point
+$\bar\bx\in\{\bx^1,\ldots,\bx^K\}$ within $K = \left(\Delta_0(\delta_g-\sigma_\star)^{-1}\right)$ outer iterations. Moreover, if each inner subproblem can be solved to value accuracy
+$\sigma_\star$ using at most $\mathcal N_{\rm in}(\sigma_\star)$
+inner first-order oracle calls, then the total number of 
+first-order oracle calls is at most $ \left(\Delta_0(\delta_g-\sigma_\star)^{-1}  \mathcal N_{\rm in}(\sigma_\star) \right)$.
+\end{theorem}
+
+\begin{proof}
+Applying \Cref{lem:dca-inexact-complexity}\,(ii) with
+$\sigma=\sigma_\star$ gives an index $k^*\in\{0,\ldots,K-1\}$ such that
+$\bx^{k^*+1}$ is
+$\bigl(\sigma_\star,\Delta_0/K+\sigma_\star,0\bigr)$-critical. Since
+$\sigma_\star\le\delta_\phi$ and
+$K\ge\Delta_0/(\delta_g-\sigma_\star)$, we have
+$\Delta_0/K+\sigma_\star\le\delta_g$. Hence
+$\bx^{k^*+1}$ is $(\delta_\phi,\delta_g,0)$-critical. The oracle bound
+follows by multiplying the number of outer iterations by the worst-case
+inner cost per subproblem.
+\end{proof}
+
+\begin{remark}
+\label{rem:dca-inexact-total-complexity}
+We now specialize the total first-order complexity bound in
+\Cref{cor:dca-inexact-target} by instantiating the inexact inner solver
+with several standard first-order methods:
+\[
+\begin{array}{c|c|c}
+\text{subproblem structure}
+& \mathcal N_{\rm in}(\sigma_\star)
+& \text{total first-order complexity}
+\\ \hline
+\text{convex, subgradient}
+& O(\sigma_\star^{-2})
+& O\!\left(\dfrac{\Delta_0}{\delta_g}\,\sigma_\star^{-2}\right)
+\\
+\text{strongly convex, subgradient}
+& O(\gamma^{-1}\sigma_\star^{-1})
+& O\!\left(\dfrac{\Delta_0}{\delta_g}\,\gamma^{-1}\sigma_\star^{-1}\right)
+\\
+\text{smooth strongly convex, GD}
+& O(\kappa\log(1/\sigma_\star))
+& O\!\left(\dfrac{\Delta_0}{\delta_g}\,\kappa\log(1/\sigma_\star)\right)
+\\
+\text{smooth strongly convex, APG}
+& O(\sqrt{\kappa}\log(1/\sigma_\star))
+& O\!\left(\dfrac{\Delta_0}{\delta_g}\,\sqrt{\kappa}\log(1/\sigma_\star)\right)
+\end{array}
+\]
+The inner-solver bounds in the second column are the classical
+deterministic first-order complexity estimates for subgradient, gradient,
+and accelerated gradient methods; see, e.g.,
+\citet[Chs.~3--4]{nesterov2018lectures} and
+\citet[Chs.~3--5]{beck2017first}.
+Here $\gamma$ is the strong convexity modulus of the subproblem $P_k$,
+$\kappa=L_P/\gamma$ is its condition number when $P_k$ is $L_P$-smooth,
+and the subgradient rows additionally assume the usual bounded-subgradient
+constants, absorbed into $O(\cdot)$.
+
+We highlight the insight of this result about the structural and
+computational contributions to the total oracle complexity:
+\blue{the outer factor $O(\Delta_0/\delta_g)$ is invariant under any
+choice of inner solver, while the structure of the subproblem affects
+only the multiplicative inner factor, which improves from
+$O(\sigma_\star^{-2})$ to $O(\sqrt\kappa\log(1/\sigma_\star))$.}
+\blue{Taking $\delta_\phi\to0$, so that $\mathcal N_{\rm in}(\sigma_\star)$
+diverges, leaves the outer factor unchanged: even an exact subproblem
+solver only certifies a $(0,\delta_g,0)$-critical point; see \Cref{thm:dca-exact-complexity}. This residual
+$\delta_g$ therefore originates from the DCA mechanism
+itself, namely the mismatch between the subgradient
+$\bv^k\in\partial g(\bx^k)$ fixed at the old iterate and the certificate
+evaluated at the new iterate $\bx^{k+1}$, rather than from any deficiency
+of the inner solver.} This reflects, at the level of oracle complexity,
+the asymmetry of \Cref{def:delta-eps-critical}: $\delta_g$ is a
+structural cost of the nonsmooth component $g$, whereas $\delta_\phi$ is
+a computational cost that enters only through $\mathcal N_{\rm in}$.
+\blue{This decomposition constitutes an algorithmic rationale for
+adopting two-sided tolerances in \Cref{def:delta-eps-critical}: merging
+$\delta_\phi$ and $\delta_g$ into a single parameter forces the inner
+accuracy to match the outer structural tolerance, eliminating the
+freedom to decouple the two costs that the schedule
+$\sigma_k\equiv\sigma_\star=\min\{\delta_\phi,\theta\delta_g\}$ in
+\Cref{cor:dca-inexact-target} exploits. We emphasize that this invariance
+is established within the DCA linearization framework and the two-point
+certificate structure of \Cref{def:delta-eps-critical}; whether it
+persists as a lower bound over a broader class of first-order algorithms
+for Problem~\eqref{prob:main} is left open.}
+\end{remark}
+
+\subsection{Iteration Complexity of Proximal DCA-type Methods}
+\label{subsec:prox-subgrad-dca}
+We now analyze proximal DCA-type updates. A proximal term shifts the
+$\phi$-side certificate from $\bv^k$ to a transported vector of the
+form $\bu^{k+1}=\bv^k-\gamma^{-1}(\bx^{k+1}-\bx^k)$; the resulting
+step-proportional residual $r\|\bx^{k+1}-\bx^k\|$ is what activates the
+mismatch slot $\eps$, whereas bare DCA, which has no proximal term,
+produces no shift and activates only the Fenchel-gap slots
+$\delta_\phi,\delta_g$. The two deterministic updates---the single-loop
+proximal-subgradient DCA (\Cref{alg:ps-dca}) and the exact proximal DCA
+as its special case---share this mechanism exactly, so we isolate their
+common estimates as \Cref{cond:certified-prox-descent}, prove the
+complexity bound once at that level, and then verify the condition for
+each. The stochastic variant of PS-DCA follows the same template but
+adds a first-order gradient-error term to the residual; it is treated
+separately in \Cref{subsec:stoch-ps-dca}.
+Throughout this subsection, for
+$\bv^k\in\partial g(\bx^k)$ and $s^k:=\bx^{k+1}-\bx^k$, define the
+transported Fenchel gap of $g$
+\begin{equation}
+    \delta_g^{k+1}
+    :=
+    \Phi_g(\bx^{k+1},\bv^k)
+    =
+    g(\bx^{k+1})-g(\bx^k)
+    -\langle \bv^k,\bx^{k+1}-\bx^k\rangle .
+    \label{eq:prox-dca-transport-g-gap}
+\end{equation}
+The equality uses $\bv^k\in\partial g(\bx^k)$ and the Fenchel--Young
+identity. In particular,
+\[
+    \bv^k\in\partial_{\delta_g^{k+1}} g(\bx^{k+1})
+\]
+by \Cref{lem:fenchel-gap-toolkit}: the subgradient $\bv^k$ that is exact
+at $\bx^k$ becomes a $\delta_g^{k+1}$-subgradient once transported to
+$\bx^{k+1}$.
+
+\begin{condition}
+\label{cond:certified-prox-descent}
+Given $\bx^0\in\dom\phi$ and constants $a>0$, $r>0$, the sequences
+$\{\bx^{k+1}\}$ and $\{\bu^{k+1}\}$, together with a choice
+$\bv^k\in\partial g(\bx^k)$, satisfy the following: for every $k$ there
+exists $\sigma_k\ge0$ such that the $\phi$-side
+certificate
+\begin{align}
+    \bu^{k+1}
+    &\in
+    \partial_{\sigma_k}\phi(\bx^{k+1}),
+    \label{eq:abstract-prox-phi-cert}
+    \\
+    \|\bu^{k+1}-\bv^k\|
+    &\le
+    r\|\bx^{k+1}-\bx^k\|,
+    \label{eq:abstract-prox-dual-residual}
+\end{align}
+and the descent estimate
+\begin{equation}
+    F(\bx^k)-F(\bx^{k+1})
+    \ge
+    \delta_g^{k+1}
+    +a\|\bx^{k+1}-\bx^k\|^2
+    -\sigma_k
+    \label{eq:abstract-prox-descent}
+\end{equation}
+hold.
+\end{condition}
+
+The next lemma is the abstract accounting device behind the
+deterministic results in this subsection. It separates the two effects
+in the certificate: the $\phi$-side Fenchel tolerance and the
+transported $g$-side Fenchel tolerance.
+
+\begin{lemma}
+\label{lem:abstract-prox-certificate-bound}
+Suppose $F^\star>-\infty$ and let $\Delta_0:=F(\bx^0)-F^\star$. Let
+$K\ge1$, and suppose \Cref{cond:certified-prox-descent} holds for
+$k=0,\ldots,K-1$ with
+\[
+    0\le\sigma_k\le\bar\sigma .
+\]
+Define
+\[
+    \hat k
+    \in
+    \argmin_{0\le k\le K-1}
+    \bigl\{
+        \delta_g^{k+1}
+        +a\|\bx^{k+1}-\bx^k\|^2
+    \bigr\},
+    \qquad
+    \bar\bx:=\bx^{\hat k+1}.
+\]
+Then $\bar\bx$ satisfies
+\begin{align}
+    \delta_g^{\hat k+1}
+    &\le
+    \frac{\Delta_0}{K}+\bar\sigma,
+    \label{eq:abstract-prox-deltag-bound}
+    \\
+    \|\bx^{\hat k+1}-\bx^{\hat k}\|
+    &\le
+    \sqrt{
+        \frac{1}{a}
+        \left(
+            \frac{\Delta_0}{K}+\bar\sigma
+        \right)
+    },
+    \label{eq:abstract-prox-step-bound}
+\end{align}
+and hence
+\begin{equation}
+    \operatorname{dist}
+    \left(
+        \partial_{\bar\sigma}\phi(\bar\bx),
+        \partial_{\frac{\Delta_0}{K}+\bar\sigma}g(\bar\bx)
+    \right)
+    \le
+    r
+    \sqrt{
+        \frac{1}{a}
+        \left(
+            \frac{\Delta_0}{K}+\bar\sigma
+        \right)
+    } .
+    \label{eq:abstract-prox-critical-bound}
+\end{equation}
+Consequently, $\bar\bx$ is a
+\[
+    \left(
+        \bar\sigma,\,
+        \frac{\Delta_0}{K}+\bar\sigma,\,
+        r
+        \sqrt{
+            \frac{1}{a}
+            \left(
+                \frac{\Delta_0}{K}+\bar\sigma
+            \right)
+        }
+    \right)\text{-critical point}.
+\]
+\end{lemma}
+
+\begin{proof}
+Summing the descent estimate \eqref{eq:abstract-prox-descent} over
+$k=0,\ldots,K-1$ gives
+\[
+    \sum_{k=0}^{K-1}
+    \left[
+        \delta_g^{k+1}
+        +
+        a\|\bx^{k+1}-\bx^k\|^2
+    \right]
+    \le
+    F(\bx^0)-F(\bx^K)+\sum_{k=0}^{K-1}\sigma_k .
+\]
+Since $F(\bx^K)\ge F^\star$ and $\sigma_k\le\bar\sigma$, we obtain
+\begin{equation}
+    \sum_{k=0}^{K-1}
+    \left[
+        \delta_g^{k+1}
+        +
+        a\|\bx^{k+1}-\bx^k\|^2
+    \right]
+    \le
+    \Delta_0+K\bar\sigma .
+    \label{eq:abstract-prox-telescope}
+\end{equation}
+By the definition of $\hat k$,
+\[
+    \delta_g^{\hat k+1}
+    +
+    a\|\bx^{\hat k+1}-\bx^{\hat k}\|^2
+    \le
+    \frac{\Delta_0}{K}+\bar\sigma .
+\]
+Both terms on the left-hand side are nonnegative, and hence
+\eqref{eq:abstract-prox-deltag-bound} and
+\eqref{eq:abstract-prox-step-bound} follow.
+
+It remains to verify the same-point certificate. By
+\eqref{eq:abstract-prox-phi-cert} and $\sigma_{\hat k}\le\bar\sigma$,
+\[
+    \bu^{\hat k+1}
+    \in
+    \partial_{\sigma_{\hat k}}\phi(\bx^{\hat k+1})
+    \subseteq
+    \partial_{\bar\sigma}\phi(\bx^{\hat k+1}).
+\]
+By the definition of $\delta_g^{\hat k+1}$ and
+\eqref{eq:abstract-prox-deltag-bound},
+\[
+    \bv^{\hat k}
+    \in
+    \partial_{\delta_g^{\hat k+1}}g(\bx^{\hat k+1})
+    \subseteq
+    \partial_{\frac{\Delta_0}{K}+\bar\sigma}g(\bx^{\hat k+1}).
+\]
+Therefore
+\[
+\begin{aligned}
+    \operatorname{dist}
+    \left(
+        \partial_{\bar\sigma}\phi(\bx^{\hat k+1}),
+        \partial_{\frac{\Delta_0}{K}+\bar\sigma}g(\bx^{\hat k+1})
+    \right)
+    &\le
+    \|\bu^{\hat k+1}-\bv^{\hat k}\|
+    \\
+    &\le
+    r\|\bx^{\hat k+1}-\bx^{\hat k}\| .
+\end{aligned}
+\]
+Combining this inequality with \eqref{eq:abstract-prox-step-bound}
+proves \eqref{eq:abstract-prox-critical-bound}.
+\end{proof}
+
+The selection of $\hat k$ uses only computable quantities:
+$\delta_g^{k+1}$ is evaluated from function values of $g$ and the
+chosen $\bv^k$, and $\|\bx^{k+1}-\bx^k\|$ is observed, so $\hat k$ is
+implementable without knowledge of the certificate tolerance
+$\sigma_k$.
+
+\begin{theorem}
+\label{thm:abstract-prox-target}
+Suppose the assumptions of \Cref{lem:abstract-prox-certificate-bound}
+hold. Let target tolerances
+$\delta_\phi,\delta_g,\eps>0$ be given, and choose
+$\bar\sigma$ such that
+\begin{equation}
+    0\le\bar\sigma\le\delta_\phi,
+    \qquad
+    \bar\sigma
+    <
+    \min\left\{
+        \delta_g,\,
+        \frac{a\eps^2}{r^2}
+    \right\}.
+    \label{eq:abstract-prox-target-compatibility}
+\end{equation}
+If
+\begin{equation}
+    K
+    \ge
+    \left\lceil
+    \Delta_0
+    \max\left\{
+        \frac{1}{\delta_g-\bar\sigma},\,
+        \frac{1}{
+            \frac{a\eps^2}{r^2}
+            -
+            \bar\sigma
+        }
+    \right\}
+    \right\rceil ,
+    \label{eq:abstract-prox-target-K}
+\end{equation}
+then the output $\bar\bx$ of
+\Cref{lem:abstract-prox-certificate-bound} is a
+$(\delta_\phi,\delta_g,\eps)$-critical point.
+\end{theorem}
+
+\begin{proof}
+The first lower bound in \eqref{eq:abstract-prox-target-K} gives
+\[
+    \frac{\Delta_0}{K}+\bar\sigma
+    \le
+    \delta_g.
+\]
+The second lower bound gives
+\[
+    \frac{\Delta_0}{K}+\bar\sigma
+    \le
+    \frac{a\eps^2}{r^2}.
+\]
+Substituting these two inequalities into
+\eqref{eq:abstract-prox-critical-bound} yields
+\[
+    \operatorname{dist}
+    \left(
+        \partial_{\bar\sigma}\phi(\bar\bx),
+        \partial_{\delta_g}g(\bar\bx)
+    \right)
+    \le
+    r\sqrt{
+        \frac{1}{a}
+        \cdot
+        \frac{a\eps^2}{r^2}
+    }
+    =
+    \eps .
+\]
+Finally, $\bar\sigma\le\delta_\phi$ implies
+$\partial_{\bar\sigma}\phi(\bar\bx)
+\subseteq
+\partial_{\delta_\phi}\phi(\bar\bx)$, so $\bar\bx$ is
+$(\delta_\phi,\delta_g,\eps)$-critical.
+\end{proof}
+
+We now verify \Cref{cond:certified-prox-descent} for concrete updates. We consider the composite case
+\begin{equation}
+    F(\bx)=f(\bx)+h(\bx)-g(\bx),
+    \qquad
+    \phi:=f+h,
+    \label{eq:composite-ps-dca-model}
+\end{equation}
+where $f:\RR^n\to\RR$ is convex and $L_f$-smooth, and $h,g$ are
+proper closed convex functions. We assume that the proximal mapping of
+$h$ is easy to compute. This setting gives a single-loop realization of
+the preceding certificate theorem.
+
+\subsubsection{Proximal-Subgradient DCA}
+
+
+For a stepsize $\eta\in(0,2/L_f)$, the proximal-subgradient DCA
+(PS-DCA) update is
+\begin{equation}
+    \bx^{k+1}
+    =
+    \prox_{\eta h}
+    \left(
+        \bx^k-\eta(\nabla f(\bx^k)-\bv^k)
+    \right),
+    \qquad
+    \bv^k\in\partial g(\bx^k).
+    \label{eq:ps-dca-step}
+\end{equation}
+Equivalently,
+\[
+    \bx^{k+1}
+    =
+    \argmin_{\bx\in\RR^n}
+    \left\{
+        h(\bx)
+        +
+        \langle \nabla f(\bx^k)-\bv^k,\bx\rangle
+        +
+        \frac{1}{2\eta}\|\bx-\bx^k\|^2
+    \right\}.
+\]
+
+Define
+\[
+    a_\eta:=\frac{1}{\eta}-\frac{L_f}{2}>0,
+    \qquad
+    r_\eta:=\frac{1}{\eta}+L_f .
+\]
+
+\begin{algorithm}[tbp]
+    \caption{\textbf{Proximal-Subgradient DCA (PS-DCA)}}
+    \label{alg:ps-dca}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} $\bx^0\in\dom\phi$, stepsize
+        $\eta\in(0,2/L_f)$, iteration number $K\ge1$.
+        \FOR{$k=0,1,\ldots,K-1$}
+            \STATE Choose $\bv^k\in\partial g(\bx^k)$.
+            \STATE
+            $\bx^{k+1}
+            =\prox_{\eta h}
+            \bigl(\bx^k-\eta(\nabla f(\bx^k)-\bv^k)\bigr)$.
+        \ENDFOR
+        \STATE Choose
+        $\hat k\in\argmin_{0\le k\le K-1}
+        \bigl\{\delta_g^{k+1}+a_\eta\|\bx^{k+1}-\bx^k\|^2\bigr\}$,
+        with $\delta_g^{k+1}$ as in
+        \eqref{eq:prox-dca-transport-g-gap}.
+        \STATE {\bfseries Output:} $\bar\bx=\bx^{\hat k+1}$.
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{lemma}[PS-DCA realization]
+\label{lem:ps-dca-realization}
+Assume \eqref{eq:composite-ps-dca-model} and let
+$\{\bx^k\}_{k\ge0}$ be generated by \eqref{eq:ps-dca-step}, with
+$a_\eta,r_\eta$ defined above. Then \Cref{cond:certified-prox-descent}
+holds with
+\[
+    a=a_\eta,
+    \qquad
+    r=r_\eta,
+    \qquad
+    \sigma_k=0 .
+\]
+More precisely, there exists
+$\bu^{k+1}\in\partial\phi(\bx^{k+1})$ such that
+\begin{align}
+    \|\bu^{k+1}-\bv^k\|
+    &\le
+    r_\eta\|\bx^{k+1}-\bx^k\|,
+    \label{eq:ps-dca-residual}
+    \\
+    F(\bx^k)-F(\bx^{k+1})
+    &\ge
+    \delta_g^{k+1}
+    +
+    a_\eta\|\bx^{k+1}-\bx^k\|^2 .
+    \label{eq:ps-dca-descent}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+Let $s^k:=\bx^{k+1}-\bx^k$. The optimality condition of
+\eqref{eq:ps-dca-step} gives
+\[
+    \zero
+    \in
+    \partial h(\bx^{k+1})
+    +
+    \nabla f(\bx^k)
+    -
+    \bv^k
+    +
+    \frac{1}{\eta}s^k .
+\]
+Hence there exists $\bw^{k+1}\in\partial h(\bx^{k+1})$ such that
+\[
+    \bw^{k+1}
+    =
+    \bv^k
+    -
+    \nabla f(\bx^k)
+    -
+    \frac{1}{\eta}s^k .
+\]
+Since $f$ is convex and differentiable,
+\[
+    \bu^{k+1}
+    :=
+    \nabla f(\bx^{k+1})+\bw^{k+1}
+    \in
+    \partial(f+h)(\bx^{k+1})
+    =
+    \partial\phi(\bx^{k+1}).
+\]
+Moreover,
+\[
+\begin{aligned}
+    \|\bu^{k+1}-\bv^k\|
+    &=
+    \left\|
+        \nabla f(\bx^{k+1})-\nabla f(\bx^k)
+        -
+        \frac{1}{\eta}s^k
+    \right\|
+    \\
+    &\le
+    L_f\|s^k\|+\frac{1}{\eta}\|s^k\|
+    =
+    r_\eta\|s^k\|,
+\end{aligned}
+\]
+which proves \eqref{eq:ps-dca-residual}.
+
+It remains to prove the descent estimate. Define
+\[
+    Q_k(\bx)
+    :=
+    h(\bx)
+    +
+    \langle \nabla f(\bx^k)-\bv^k,\bx\rangle
+    +
+    \frac{1}{2\eta}\|\bx-\bx^k\|^2 .
+\]
+The function $Q_k$ is $\eta^{-1}$-strongly convex, and
+$\bx^{k+1}$ minimizes $Q_k$. Hence
+\[
+    Q_k(\bx^k)-Q_k(\bx^{k+1})
+    \ge
+    \frac{1}{2\eta}\|s^k\|^2.
+\]
+Expanding this inequality gives
+\begin{equation}
+    h(\bx^k)-h(\bx^{k+1})
+    +
+    \langle \bv^k-\nabla f(\bx^k),s^k\rangle
+    \ge
+    \frac{1}{\eta}\|s^k\|^2 .
+    \label{eq:ps-dca-h-descent}
+\end{equation}
+By $L_f$-smoothness of $f$,
+\[
+    f(\bx^{k+1})
+    \le
+    f(\bx^k)
+    +
+    \langle\nabla f(\bx^k),s^k\rangle
+    +
+    \frac{L_f}{2}\|s^k\|^2,
+\]
+or equivalently
+\begin{equation}
+    f(\bx^k)-f(\bx^{k+1})
+    \ge
+    -\langle\nabla f(\bx^k),s^k\rangle
+    -
+    \frac{L_f}{2}\|s^k\|^2 .
+    \label{eq:ps-dca-f-descent}
+\end{equation}
+Combining \eqref{eq:ps-dca-h-descent} and
+\eqref{eq:ps-dca-f-descent}, and using
+\[
+    \delta_g^{k+1}
+    =
+    g(\bx^{k+1})-g(\bx^k)-\langle\bv^k,s^k\rangle,
+\]
+we obtain
+\[
+\begin{aligned}
+    F(\bx^k)-F(\bx^{k+1})
+    &=
+    f(\bx^k)-f(\bx^{k+1})
+    +
+    h(\bx^k)-h(\bx^{k+1})
+    +
+    g(\bx^{k+1})-g(\bx^k)
+    \\
+    &=
+    f(\bx^k)-f(\bx^{k+1})
+    +
+    h(\bx^k)-h(\bx^{k+1})
+    +
+    \langle\bv^k,s^k\rangle
+    +
+    \delta_g^{k+1}
+    \\
+    &\ge
+    \left(
+        \frac{1}{\eta}
+        -
+        \frac{L_f}{2}
+    \right)
+    \|s^k\|^2
+    +
+    \delta_g^{k+1}.
+\end{aligned}
+\]
+This proves \eqref{eq:ps-dca-descent}.
+\end{proof}
+
+\begin{corollary}[Iteration complexity of PS-DCA]
+\label{cor:ps-dca-complexity}
+Suppose $F^\star>-\infty$ and the assumptions of
+\Cref{lem:ps-dca-realization} hold. Let
+$\eta\in(0,2/L_f)$ and let $\{\bx^k\}_{k\ge0}$ be generated by
+\eqref{eq:ps-dca-step}. Then for every $K\ge1$, there exists
+$\hat k\in\{0,\ldots,K-1\}$ such that
+$\bar\bx:=\bx^{\hat k+1}$ is a
+\begin{equation}
+    \left(
+        0,\,
+        \frac{\Delta_0}{K},\,
+        r_\eta
+        \sqrt{
+            \frac{\Delta_0}{a_\eta K}
+        }
+    \right)\text{-critical point}.
+    \label{eq:ps-dca-rate}
+\end{equation}
+Consequently, to obtain a $(0,\delta_g,\eps)$-critical point, it
+suffices to take
+\begin{equation}
+    K
+    \ge
+    \left\lceil
+    \max\left\{
+        \frac{\Delta_0}{\delta_g},\,
+        \frac{r_\eta^2\Delta_0}{a_\eta\eps^2}
+    \right\}
+    \right\rceil .
+    \label{eq:ps-dca-target-K}
+\end{equation}
+In particular, for the standard choice $\eta=1/L_f$,
+\[
+    a_\eta=\frac{L_f}{2},
+    \qquad
+    r_\eta=2L_f,
+\]
+and \eqref{eq:ps-dca-target-K} becomes
+\begin{equation}
+    K
+    \ge
+    \left\lceil
+    \max\left\{
+        \frac{\Delta_0}{\delta_g},\,
+        \frac{8L_f\Delta_0}{\eps^2}
+    \right\}
+    \right\rceil .
+    \label{eq:ps-dca-standard-stepsize-K}
+\end{equation}
+The constant in the $\eps^{-2}$ term is minimized within the bound
+\eqref{eq:ps-dca-target-K} by taking $\eta=1/(2L_f)$, which gives
+\[
+    \frac{r_\eta^2}{a_\eta}=6L_f .
+\]
+\end{corollary}
+
+\begin{proof}
+Apply \Cref{lem:abstract-prox-certificate-bound} with
+$a=a_\eta$, $r=r_\eta$, and $\bar\sigma=0$, using
+\Cref{lem:ps-dca-realization}. This gives
+\[
+    \delta_g^{\hat k+1}\le\frac{\Delta_0}{K},
+    \qquad
+    \|\bu^{\hat k+1}-\bv^{\hat k}\|
+    \le
+    r_\eta
+    \sqrt{\frac{\Delta_0}{a_\eta K}},
+\]
+which is exactly \eqref{eq:ps-dca-rate}. The target bound
+\eqref{eq:ps-dca-target-K} follows by requiring
+$\Delta_0/K\le\delta_g$ and
+$r_\eta\sqrt{\Delta_0/(a_\eta K)}\le\eps$.
+
+For $\eta=1/L_f$,
+\[
+    \frac{r_\eta^2}{a_\eta}
+    =
+    \frac{(2L_f)^2}{L_f/2}
+    =
+    8L_f.
+\]
+For the last claim, set $a=1/\eta$ and minimize
+\[
+    \frac{(a+L_f)^2}{a-L_f/2}
+    \qquad
+    \text{over }a>L_f/2.
+\]
+The derivative vanishes at $a=2L_f$, i.e., at
+$\eta=1/(2L_f)$, and the corresponding value is
+\[
+    \frac{(3L_f)^2}{3L_f/2}=6L_f.
+\]
+\end{proof}
+
+\subsubsection{Exact Proximal DCA as a Special Case}
+
+The classical exact proximal DCA update with parameter $\gamma>0$,
+\begin{equation}
+    \bx^{k+1}
+    =
+    \argmin_{\bx\in\RR^n}
+    \left\{
+        \phi(\bx)-\langle\bv^k,\bx\rangle
+        +
+        \frac{1}{2\gamma}\|\bx-\bx^k\|^2
+    \right\},
+    \qquad
+    \bv^k\in\partial g(\bx^k),
+    \label{eq:exact-prox-dca-step}
+\end{equation}
+is the instance of \eqref{eq:ps-dca-step} obtained by taking
+$f\equiv0$ and $h=\phi$ with stepsize $\eta=\gamma$: the smooth part
+vanishes, so $L_f=0$, every stepsize $\gamma>0$ is admissible, and the
+update reduces to
+$\bx^{k+1}=\prox_{\gamma\phi}(\bx^k+\gamma\bv^k)$, which is
+\eqref{eq:exact-prox-dca-step}. The quadratic term makes the
+subproblem strongly convex, so the minimizer is unique whenever
+$\phi$ is proper closed convex; computing it is exactly the proximal
+oracle for the full convex part $\phi$. \Cref{lem:ps-dca-realization}
+applies with $L_f=0$ and yields the realization constants
+\[
+    a=\frac{1}{\gamma},
+    \qquad
+    r=\frac{1}{\gamma},
+    \qquad
+    \sigma_k=0,
+\]
+with the shifted dual certificate
+$\bu^{k+1}=\bv^k-\gamma^{-1}(\bx^{k+1}-\bx^k)\in\partial\phi(\bx^{k+1})$.
+
+\begin{corollary}[Iteration complexity of exact proximal DCA]
+\label{cor:exact-prox-dca-complexity}
+Suppose $F^\star>-\infty$, let $\phi$ and $g$ be proper closed convex
+functions, and let $\{\bx^k\}_{k\ge0}$ be generated by
+\eqref{eq:exact-prox-dca-step}. Then for every $K\ge1$, there exists
+$\hat k\in\{0,\ldots,K-1\}$ such that
+$\bar\bx:=\bx^{\hat k+1}$ is a
+\begin{equation}
+    \left(
+        0,\,
+        \frac{\Delta_0}{K},\,
+        \sqrt{\frac{\Delta_0}{\gamma K}}
+    \right)\text{-critical point}.
+    \label{eq:exact-prox-dca-rate}
+\end{equation}
+Consequently, to obtain a $(0,\delta_g,\eps)$-critical point, it
+suffices to take
+\begin{equation}
+    K
+    \ge
+    \left\lceil
+    \max\left\{
+        \frac{\Delta_0}{\delta_g},\,
+        \frac{\Delta_0}{\gamma\eps^2}
+    \right\}
+    \right\rceil .
+    \label{eq:exact-prox-dca-target-K}
+\end{equation}
+In particular, if $K\ge\lceil\Delta_0/(\gamma\eps^2)\rceil$, then the
+same output is a $(0,\gamma\eps^2,\eps)$-critical point.
+\end{corollary}
+
+\begin{proof}
+Apply \Cref{lem:abstract-prox-certificate-bound} with the constants
+$a=r=\gamma^{-1}$ and $\bar\sigma=0$ supplied by
+\Cref{lem:ps-dca-realization} with $f\equiv0$ and $\eta=\gamma$. Since
+$r\sqrt{\Delta_0/(aK)}=\sqrt{\Delta_0/(\gamma K)}$, the abstract bound
+\eqref{eq:abstract-prox-critical-bound} gives
+\eqref{eq:exact-prox-dca-rate}, and
+\eqref{eq:exact-prox-dca-target-K} follows by imposing
+$\Delta_0/K\le\delta_g$ and $\sqrt{\Delta_0/(\gamma K)}\le\eps$.
+\end{proof}
+
+\begin{remark}[Realizations and activated slots]
+\label{rem:prox-realization-table}
+The two realizations above fit the same abstract certificate template:
+\[
+\begin{array}{c|c|c|c|c}
+\text{method}
+& a
+& r
+& \delta_\phi\text{-slot}
+& \eps\text{-slot}
+\\ \hline
+\text{exact proximal DCA}
+& \gamma^{-1}
+& \gamma^{-1}
+& 0
+& \gamma^{-1}\|\bx^{k+1}-\bx^k\|
+\\
+\text{PS-DCA for }\phi=f+h
+& \eta^{-1}-L_f/2
+& \eta^{-1}+L_f
+& 0
+& (\eta^{-1}+L_f)\|\bx^{k+1}-\bx^k\|
+\end{array}
+\]
+Thus exact proximal DCA and PS-DCA both activate the $\eps$-slot,
+whereas classical bare DCA activates only the Fenchel-gap slots
+$\delta_\phi,\delta_g$.
+\end{remark}
+
+\begin{remark}[Value-gap inexactness for the proximal subproblem]
+\label{rem:prox-value-gap-warning}
+The parameter $\sigma_k$ in
+\eqref{eq:abstract-prox-phi-cert}--\eqref{eq:abstract-prox-descent} is a
+certificate/decrease tolerance. A pure value-gap condition for the
+proximalized subproblem,
+\[
+    M_k(\bx^{k+1})\le\inf_{\bx}M_k(\bx)+\sigma_k,
+    \qquad
+    M_k(\bx):=
+    \phi(\bx)-\langle\bv^k,\bx\rangle
+    +
+    \frac{1}{2\gamma}\|\bx-\bx^k\|^2,
+\]
+does not by itself imply
+\[
+    \bv^k-\gamma^{-1}(\bx^{k+1}-\bx^k)
+    \in
+    \partial_{\sigma_k}\phi(\bx^{k+1}).
+\]
+Indeed, expanding the value-gap inequality around $\bx^{k+1}$ leaves an
+additional term
+\[
+    -\frac{1}{2\gamma}\|\bz-\bx^{k+1}\|^2
+\]
+in the supporting inequality for $\phi$, which is unbounded below as a
+function of $\bz$. For this reason, the unified theorem is stated in
+terms of the verifiable certificate
+\eqref{eq:abstract-prox-phi-cert} and the descent estimate
+\eqref{eq:abstract-prox-descent}. Exact proximal DCA and PS-DCA satisfy
+these conditions with $\sigma_k=0$.
+\end{remark}
+
+\begin{remark}[Coupling between $\delta_g$ and $\eps$]
+\label{rem:prox-deltag-eps-coupling}
+\Cref{cor:exact-prox-dca-complexity} gives the same output point with
+\[
+    \delta_g
+    \le
+    \frac{\Delta_0}{K},
+    \qquad
+    \eps
+    \le
+    \sqrt{\frac{\Delta_0}{\gamma K}}.
+\]
+Therefore, choosing $K=\lceil\Delta_0/(\gamma\eps^2)\rceil$ gives
+\[
+    \delta_g\le\gamma\eps^2.
+\]
+This is the precise proximal DCA coupling between the transported
+Fenchel error and the dual certificate mismatch. It explains why the
+proximal analysis is the natural source of an
+$O(\Delta_0/(\gamma\eps^2))$ upper bound for the $\eps$-slot, while the
+bare DCA analysis gives $\eps=0$ and only measures $\delta_g$.
+\end{remark}
+
+\subsection{Smoothing and the Two-Sided Certificate}
+\label{sec:smoothing-certificate}
+
+Smoothing the concave part is a third, and popular, route to nonsmooth DC
+problems. Rather than propose a new method, we use it to make one point: the
+$(\delta_{\phi},\delta_g,\eps)$-criticality of \Cref{def:delta-eps-critical} is
+exactly the object such smoothing produces, so existing smoothing guarantees are
+\emph{relabelings} of our certificate. Fix $\mu>0$ and recall the Moreau
+envelope of $g$,
+\begin{equation}
+    g_\mu(\bx)
+    :=
+    \min_{\by\in\RR^n}
+    \Bigl\{
+        g(\by)+\tfrac{1}{2\mu}\|\by-\bx\|^2
+    \Bigr\},
+    \qquad
+    \tilde{\bx}:=\prox_{\mu g}(\bx)
+    =\argmin_{\by\in\RR^n}
+    \Bigl\{
+        g(\by)+\tfrac{1}{2\mu}\|\by-\bx\|^2
+    \Bigr\},
+    \label{eq:moreau-envelope}
+\end{equation}
+where the minimizer $\tilde{\bx}$ is unique because the inner objective is
+$\tfrac1\mu$-strongly convex. Throughout this subsection we take
+$(\phi,g)\in\mathcal D(\Delta,L,G)$, so both convex components are
+finite-valued with uniformly bounded subgradients; accordingly we write
+\[
+    G_g:=\sup_{\bx}\;\sup_{\bv\in\partial g(\bx)}\|\bv\|\;\le\;G,
+    \qquad
+    G_\phi:=\sup_{\bx}\;\sup_{\bu\in\partial\phi(\bx)}\|\bu\|\;\le\;G .
+\]
+Replacing $g$ by $g_\mu$ renders the concave part smooth, and
+$\eps$-criticality of the smoothed problem $\phi-g_\mu$ reads
+$\operatorname{dist}\bigl(\partial\phi(\bx),\{\nabla g_\mu(\bx)\}\bigr)\le\eps$.
+The next lemma shows that this smoothed certificate is, verbatim, a
+$(\delta_{\phi},\delta_g,\eps)$-certificate for the original nonsmooth problem,
+with an explicit $\delta_g$ that is linear in $\mu$.
+
+\begin{lemma}[One-sided Moreau reduction]
+\label{lem:moreau-reduction}
+Let $(\phi,g)\in\mathcal D(\Delta,L,G)$, fix $\mu>0$, and suppose
+$\bx\in\RR^n$ satisfies the $\eps$-criticality condition for the smoothed
+problem $\phi-g_\mu$,
+\[
+    \operatorname{dist}\bigl(\partial\phi(\bx),\{\nabla g_\mu(\bx)\}\bigr)\le\eps ;
+\]
+equivalently, there exists $\bu\in\partial\phi(\bx)$ with
+$\|\bu-\nabla g_\mu(\bx)\|\le\eps$. Then $\bx$ is a
+$\bigl(0,\,2G_g^2\mu,\,\eps\bigr)$-critical point of the original problem
+\eqref{prob:main} in the sense of
+\Cref{def:delta-eps-critical}.
+\end{lemma}
+
+\begin{proof}
+Write $\bv:=\nabla g_\mu(\bx)$ and $\tilde{\bx}:=\prox_{\mu g}(\bx)$.
+
+\emph{Step 1 (Moreau identities).}
+The optimality condition for $\tilde{\bx}$ in \eqref{eq:moreau-envelope} is
+$\zero\in\partial g(\tilde{\bx})+\tfrac1\mu(\tilde{\bx}-\bx)$, hence
+\begin{equation}
+    \bv=\nabla g_\mu(\bx)=\frac{\bx-\tilde{\bx}}{\mu}\in\partial g(\tilde{\bx}).
+    \label{eq:moreau-grad}
+\end{equation}
+Since $\bv\in\partial g(\tilde{\bx})$ and the subgradients of $g$ are bounded by
+$G_g$, taking norms in \eqref{eq:moreau-grad} gives
+\begin{equation}
+    \|\bx-\tilde{\bx}\|=\mu\|\bv\|\le\mu G_g .
+    \label{eq:prox-move}
+\end{equation}
+
+\emph{Step 2 (Transported Fenchel gap).}
+Because $\bv\in\partial g(\tilde{\bx})$, the Fenchel--Young equality of
+\Cref{lem:fenchel-gap-toolkit} at $\tilde{\bx}$ yields
+$g^*(\bv)=\langle\bv,\tilde{\bx}\rangle-g(\tilde{\bx})$. Substituting this into
+the gap function evaluated at the base point $\bx$,
+\begin{equation}
+    \Phi_g(\bx,\bv)
+    =g(\bx)+g^*(\bv)-\langle\bv,\bx\rangle
+    =g(\bx)-g(\tilde{\bx})-\langle\bv,\bx-\tilde{\bx}\rangle .
+    \label{eq:gap-transported}
+\end{equation}
+
+\emph{Step 3 (Bounding the gap).}
+Pick any $\bs_{\bx}\in\partial g(\bx)$, so $\|\bs_{\bx}\|\le G_g$; convexity of
+$g$ gives the subgradient inequality
+$g(\bx)-g(\tilde{\bx})\le\langle\bs_{\bx},\bx-\tilde{\bx}\rangle$. Combining this
+with \eqref{eq:gap-transported}, the Cauchy--Schwarz and triangle inequalities,
+\eqref{eq:moreau-grad}, and \eqref{eq:prox-move},
+\begin{align}
+    \Phi_g(\bx,\bv)
+    &\le \langle\bs_{\bx}-\bv,\,\bx-\tilde{\bx}\rangle
+    \le \|\bs_{\bx}-\bv\|\,\|\bx-\tilde{\bx}\|
+    \le \bigl(\|\bs_{\bx}\|+\|\bv\|\bigr)\,\|\bx-\tilde{\bx}\| \notag\\
+    &\le 2G_g\,\|\bx-\tilde{\bx}\|
+    \le 2G_g^2\mu ,
+    \label{eq:gap-bound}
+\end{align}
+where the last two inequalities use $\|\bs_{\bx}\|\le G_g$,
+$\|\bv\|\le G_g$, and \eqref{eq:prox-move}.
+
+\emph{Step 4 (Assembling the certificate).}
+By \eqref{eq:gap-bound} and \Cref{lem:fenchel-gap-toolkit},
+$\bv\in\partial_{2G_g^2\mu}\,g(\bx)$. The hypothesis furnishes
+$\bu\in\partial\phi(\bx)=\partial_0\phi(\bx)$, so $\Phi_\phi(\bx,\bu)=0$, and
+$\|\bu-\bv\|=\|\bu-\nabla g_\mu(\bx)\|\le\eps$. The pair $(\bu,\bv)$ therefore
+witnesses
+\[
+    \Phi_\phi(\bx,\bu)\le 0,
+    \qquad
+    \Phi_g(\bx,\bv)\le 2G_g^2\mu,
+    \qquad
+    \|\bu-\bv\|\le\eps ,
+\]
+which is exactly the Fenchel-gap form of a $(0,2G_g^2\mu,\eps)$-critical point
+in \Cref{def:delta-eps-critical}.
+\end{proof}
+
+\begin{corollary}[Two-sided DME reduction]
+\label{cor:dme-reduction}
+Let $(\phi,g)\in\mathcal D(\Delta,L,G)$ and fix $\mu_\phi,\mu_g>0$. Consider the
+difference-of-Moreau-envelopes surrogate $\phi_{\mu_\phi}-g_{\mu_g}$, where
+$\phi_{\mu_\phi}$ and $g_{\mu_g}$ are the Moreau envelopes of $\phi$ and $g$.
+If $\bx$ is an $\eps$-critical point of this smooth surrogate, i.e.\
+$\|\nabla\phi_{\mu_\phi}(\bx)-\nabla g_{\mu_g}(\bx)\|\le\eps$, then $\bx$ is a
+$\bigl(2G_\phi^2\mu_\phi,\,2G_g^2\mu_g,\,\eps\bigr)$-critical point of the
+original problem \eqref{prob:main}.
+\end{corollary}
+
+\begin{proof}
+Apply the argument of \Cref{lem:moreau-reduction} to each component. Put
+$\bu:=\nabla\phi_{\mu_\phi}(\bx)$ and $\bv:=\nabla g_{\mu_g}(\bx)$. Steps~1--3,
+run on $g$ with parameter $\mu_g$, give
+$\bv\in\partial_{2G_g^2\mu_g}\,g(\bx)$; the same steps, run symmetrically on
+$\phi$ with parameter $\mu_\phi$ (with $\prox_{\mu_\phi\phi}$ in place of
+$\prox_{\mu_g g}$ and $G_\phi$ in place of $G_g$), give
+$\bu\in\partial_{2G_\phi^2\mu_\phi}\,\phi(\bx)$. The surrogate stationarity
+$\|\bu-\bv\|\le\eps$ then closes the certificate through
+\Cref{def:delta-eps-critical}.
+\end{proof}
+
+\begin{remark}[Smoothing relabels the target, not the rate]
+\label{rem:smoothing-native-limit}
+\Cref{lem:moreau-reduction} and \Cref{cor:dme-reduction} place existing
+smoothing methods on the two-sided certificate and separate what their
+guarantees keep from what they merely relabel. Driving $\mu\to0$ sends
+$\delta_g=2G_g^2\mu\to0$, so smoothed stationarity recovers exact DC criticality
+in the limit, while any fixed $\mu>0$ delivers a genuine same-point certificate
+with an explicit, tunable $\delta_g=O(\mu)$.
+
+\emph{What is unchanged---the iteration exponent.} In the deterministic regime,
+the difference-of-Moreau-envelopes scheme of \citet{sun2023algorithms} reaches
+an $\eps$-stationary point of the surrogate $\phi_{\mu_\phi}-g_{\mu_g}$ in
+$O(\eps^{-2})$ proximal evaluations; composing with \Cref{cor:dme-reduction}
+turns this into a $(2G_\phi^2\mu_\phi,2G_g^2\mu_g,\eps)$-certificate for the
+original problem at the \emph{same} $O(\eps^{-2})$ rate reached here without any
+smoothing (\Cref{cor:exact-prox-dca-complexity}). In the stochastic regime,
+single-loop methods that optimize a smoothed objective---for instance
+\citet{chayti2025stochastic} and \citet{hu2024single}---reach $\eps$-stationarity
+in $O(\eps^{-4})$ iterations; since the reduction only relabels the point already
+produced, this exponent is inherited unchanged on the two-sided certificate, the
+smoothing parameter surfacing as the $\delta_g$ budget.
+
+\emph{What changes---the target.} A single $\eps$-stationarity condition on a
+smooth surrogate becomes the three-slot $(\delta_\phi,\delta_g,\eps)$-certificate
+of the original nonsmooth problem, in which the smoothing parameters appear as
+the explicit, separately controllable budgets $\delta_\phi=O(\mu_\phi)$ and
+$\delta_g=O(\mu_g)$. The bias hidden inside the surrogate---the discrepancy
+between the smoothed and the original objective---is thereby exposed as a
+certificate slot rather than left implicit. Smoothing is consequently dispensable
+in the deterministic regime, where the transported Fenchel gap $\delta_g$ already
+absorbs the nonsmoothness of $g$ directly; it re-enters only as an algorithmic
+device that renders a component differentiable, which is precisely the structure
+a stochastic variance-reduced analysis can exploit.
+\end{remark}
+

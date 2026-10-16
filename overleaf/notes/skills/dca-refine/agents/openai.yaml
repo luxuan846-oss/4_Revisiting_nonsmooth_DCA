@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCA 初稿完善"
+  short_description: "围绕已证明结果完善非光滑 DCA 初稿并追踪理论和写作缺口"
+  default_prompt: "使用 $dca-refine 读取当前初稿与讨论记录，给出并执行范围明确的完善任务。"

@@ -1,0 +1,92 @@
+\section{Special ase: Smooth DCA Lower Bound}
+\label{Appendix: lower bound of DCA}
+The preceding upper bound has an unavoidable $\delta_g^{-1}$ dependence in worst-case first-order complexity. The cleanest way to see this is a smooth embedding reduction.
+
+\begin{lemma}[Approximate Fenchel criticality implies smooth stationarity]
+Let $h$ be convex and $L$-smooth. If $v\in\partial_\delta h(x)$, then
+\begin{equation}
+    \|v-\nabla h(x)\|\le \sqrt{2L\delta}.
+    \label{eq:fenchel-gap-smooth-conversion}
+\end{equation}
+Consequently, if $\phi$ and $g$ are convex $L$-smooth and
+\begin{equation}
+    a\in\partial_{\delta_\phi}\phi(x),
+    \quad
+    b\in\partial_{\delta_g}g(x),
+    \quad
+    \|a-b\|\le\eta,
+\end{equation}
+then
+\begin{equation}
+    \|\nabla(\phi-g)(x)\|
+    \le
+    \eta+
+    \sqrt{2L\delta_\phi}+
+    \sqrt{2L\delta_g}.
+    \label{eq:relaxed-to-smooth-stationarity}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For convex $L$-smooth $h$, the conjugate $h^*$ is $1/L$-strongly convex on its effective domain. Since
+\begin{equation}
+    \Phi_h(x,v)=h(x)+h^*(v)-\langle v,x\rangle
+    =D_{h^*}(v,\nabla h(x)),
+\end{equation}
+we have
+\begin{equation}
+    \Phi_h(x,v)\ge \frac{1}{2L}\|v-\nabla h(x)\|^2.
+\end{equation}
+The implication \eqref{eq:fenchel-gap-smooth-conversion} follows from $\Phi_h(x,v)\le\delta$. Applying this to $\phi$ and $g$ and using the triangle inequality proves \eqref{eq:relaxed-to-smooth-stationarity}.
+\end{proof}
+
+\begin{theorem}[Smooth embedding lower bound]
+Fix a component oracle that returns
+\begin{equation}
+    (\phi(x),g(x),\nabla\phi(x),\nabla g(x)).
+\end{equation}
+There exists a smooth DC subclass with both components convex and smooth such that any algorithm that guarantees a point satisfying
+\begin{equation}
+    \delta_\phi,\delta_g\le c\eps^2/L,
+    \qquad
+    \eta\le c\eps
+\end{equation}
+for a sufficiently small numerical constant $c>0$ requires
+\begin{equation}
+    \Omega(\Delta L\eps^{-2})
+    =\Omega(\Delta/\delta)
+\end{equation}
+component-oracle calls, where $\delta\asymp\eps^2/L$.
+\end{theorem}
+
+\begin{proof}
+Let $\widehat F$ be a smooth nonconvex hard instance with $L_0$-Lipschitz gradient and initial gap at most $\Delta$, for which any first-order method needs $\Omega(\Delta L_0\eps^{-2})$ queries to find a point satisfying $\|\nabla\widehat F(x)\|\le\eps$; see \citet{carmon2020lower1,carmon2020lower2}. Define
+\begin{equation}
+    q(x):=\frac{L_0}{2}\|x\|^2,
+    \qquad
+    \phi(x):=\widehat F(x)+q(x),
+    \qquad
+    g(x):=q(x).
+\end{equation}
+Since $\widehat F$ is $L_0$-smooth, $\widehat F+q$ is convex. Moreover, $\phi$ is $2L_0$-smooth and $g$ is $L_0$-smooth. Set the component smoothness budget $L=2L_0$. The difference satisfies $\phi-g=\widehat F$.
+
+The component oracle is equivalent to the standard first-order oracle for $\widehat F$ because
+\begin{equation}
+    \widehat F(x)=\phi(x)-g(x),
+    \qquad
+    \nabla\widehat F(x)=\nabla\phi(x)-\nabla g(x),
+\end{equation}
+while the reverse simulation is obtained by adding the known quadratic $q$. Finally, Lemma~1 implies that any returned point with $\delta_\phi,\delta_g\le c\eps^2/L$ and $\eta\le c\eps$ is an $\eps$-stationary point of $\widehat F$, after decreasing $c$ if needed. A faster algorithm would contradict the smooth lower bound.
+\end{proof}
+
+\begin{remark}[Condition-number phrasing]
+If the paper states the relaxed-to-smooth conversion through a strong convexity constant $\gamma$ of $g$ and a smoothness constant $L$, a conservative regime is
+\begin{equation}
+    \delta_g\lesssim \gamma\eps^2/L^2.
+\end{equation}
+Under that normalization, the same smooth embedding gives a lower bound often written as
+\begin{equation}
+    \Omega\left(\frac{\gamma}{L}\cdot\frac{\Delta}{\delta_g}\right),
+\end{equation}
+which matches the $O(\Delta/\delta_g)$ upper bound up to the condition-number factor $L/\gamma$. If the smooth DC subclass allows $g$ to be a quadratic with curvature of order $L$, the clean $\Omega(\Delta/\delta)$ form applies.
+\end{remark}
