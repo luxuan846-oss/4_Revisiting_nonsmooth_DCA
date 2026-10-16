@@ -17,6 +17,7 @@
 - “VAC 是最强可计算目标”不成立：Goldstein 驻点严格更强，且在 DC 类上有限时间可算。
 - 结合 GPT Pro 第二轮评议后调整：主线改为“普通分量 oracle 下 DC 结构能否打破确定性 Goldstein 的指数障碍”。助手推导两点（待核）：(1) Kornowski 2609.23837 的指数困难实例不在有界 DC 类中，否则与 Kong–Lewis 的维数无关上界矛盾；(2) $F_0=\max\{0,x_1,x_2\}-\max\{0,-x_1,-x_2\}$ 在原点对**所有**凸分解都 DC 临界，但不是 Clarke 驻点，证明见 [gpt-proofs](../gpt-proofs/irremovable-pseudo-criticality-2026-10-16.md)。
 - 讨论后的论文结构（主线：确定性方法在弱凸之外能否保住 $\Theta(\varepsilon^{-4})$；Q0 不可达 → VAC → Q1 含义 → Q2 确定性上下界 → Q3 确定性边界，按出现顺序编号）见 [论文结构](../project/paper-structure-2026-10-16.md)。尚待用户与合作者确认。全文逻辑与新见解核查 prompt：[gptpro-logic-and-insight-audit-prompt](../prompts/gptpro-logic-and-insight-audit-prompt.md)。
+- GPT 关于 Q3 的对话（待独立审核）已归档，见 [对话记录](../conversations/chatgpt-6ad27f37-q3-deterministic-frontier.md)。GPT 给出的主张：普通分量 oracle 下 L1 有维数无关的确定性上界；固定分量常数时 L2 有 $n-2$ 次查询下界，同时有 $O(n\log n)$ 的确定性上界，靠局部纯化引理实现。它还修正了上面第 (1) 点：Kornowski 的困难实例是 DC，但分量 Lipschitz 常数随实例长度增长。证明报告附件尚未取回。
 
 ## 用户已确定的方向
 

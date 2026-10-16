@@ -6,6 +6,7 @@
 |---|---|---|
 | [01a1253d](codex://threads/01a1253d-200f-72b0-b568-afdb6057295c) | JMLR 参考文章与编委；8 月主要结果尚未公开；同期工作、新颖性和 Ding–Yuan 版本差异 | [用户与助手记录](01a1253d-200f-72b0-b568-afdb6057295c.md)，23 条消息 |
 | [01a12739](codex://threads/01a12739-2eab-7ec3-ad50-5a1a39c0c393) | 期刊定位；用户决定 MP 或 JMLR；旧助手给出的最小执行建议 | [用户与助手记录](01a12739-2eab-7ec3-ad50-5a1a39c0c393.md)，6 条消息 |
+| [ChatGPT 6ad27f37](https://chatgpt.com/share/6ad27f37-6e44-83e9-8f5b-5a3e04628189) | 2026-10-16：Q3 确定性边界（L1 维数无关上界，L2 的 $\Omega(n)$ 下界与 $O(n\log n)$ 上界，局部纯化）；Kornowski 2609.23837、Kong–Lewis 对照；引言表述 | [用户与助手记录](chatgpt-6ad27f37-q3-deterministic-frontier.md)，59 条消息 |
 
 两个会话日期均为 2026-10-10。`codex://` 链接用于本机定位，GPT 不一定能够打开，所以附件包同时包含文本记录。
 
