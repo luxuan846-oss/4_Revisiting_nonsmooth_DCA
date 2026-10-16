@@ -16,7 +16,7 @@
 - 助手建议的主问题（待用户确认）：问题一，分解无关性的价格（VAC 对比 Goldstein，有界 DC 类）；问题二，DC 类上的确定性价格（Kong–Lewis 的 $\varepsilon^{-1}$ 差距）。
 - “VAC 是最强可计算目标”不成立：Goldstein 驻点严格更强，且在 DC 类上有限时间可算。
 - 结合 GPT Pro 第二轮评议后调整：主线改为“普通分量 oracle 下 DC 结构能否打破确定性 Goldstein 的指数障碍”。助手推导两点（待核）：(1) Kornowski 2609.23837 的指数困难实例不在有界 DC 类中，否则与 Kong–Lewis 的维数无关上界矛盾；(2) $F_0=\max\{0,x_1,x_2\}-\max\{0,-x_1,-x_2\}$ 在原点对**所有**凸分解都 DC 临界，但不是 Clarke 驻点，证明见 [gpt-proofs](../gpt-proofs/irremovable-pseudo-criticality-2026-10-16.md)。
-- Q3 定位修正（助手判断，待核）：K7 推理在“局部 oracle 能模拟方向 oracle”（Tian–So Remark 1）条件下成立；因此“DC 结构打破指数障碍”属于 Kong–Lewis，不是本文贡献。本文 Q3 的增量改述为：同一分量 oracle 下，按方向挑选并列次梯度的价值恰为 $\widetilde\Theta(n)$，即 DC 类上确定性的维数代价。Q3 上下界仍为 GPT Pro 证明稿，未入库。全文转折版叙事与对 GPT Pro 核验的判断见 [narrative-turns](../project/narrative-turns-2026-10-16.md)。
+- Q3 定位修正（助手判断，待核）：K7 推理成立（局部 oracle 可给出 Prop. 2.4 意义下的 Clarke 方向信息），“DC 结构打破指数障碍”归功于 Kong–Lewis。GPT Pro 证明稿给出：普通分量 oracle 下，L1 维数无关；L2 满足 $\Omega(n)\le N\le O(n\log n)$，下界实例是 $F_0$ 嵌入未探测子空间。报告已入库为 [Q3 证明报告](../gpt-proofs/Q3-deterministic-frontier-proof-report-2026-10-16.md)，尚未独立审核。此前“按方向挑选并列次梯度值一个线性因子”的说法已撤回。转折版叙事见 [narrative-turns](../project/narrative-turns-2026-10-16.md)；Q1 速率 $\varepsilon^{-4}$ 与结构文件 §6.4 的 $\varepsilon^{-5}$ 待统一。
 - 讨论后的论文结构（主线：确定性方法在弱凸之外能否保住 $\Theta(\varepsilon^{-4})$；Q0 不可达 → VAC → Q1 含义 → Q2 确定性上下界 → Q3 确定性边界，按出现顺序编号）见 [论文结构](../project/paper-structure-2026-10-16.md)。尚待用户与合作者确认。全文逻辑与新见解核查 prompt：[gptpro-logic-and-insight-audit-prompt](../prompts/gptpro-logic-and-insight-audit-prompt.md)。
 
 ## 用户已确定的方向

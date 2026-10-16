@@ -1,51 +1,59 @@
-# 全文叙事：转折版（2026-10-16）
+# 全文叙事：转折版（2026-10-16，第二版）
 
-状态：助手提出的叙事建议，待用户与合作者确认。Q3 的 $\widetilde O(n)$ 上界与 $\Omega(n)$ 下界来自 GPT Pro 证明稿，尚未入库，也未经审核；本节凡涉及 Q3 定理处均以此为前提。
+状态：助手提出的叙事建议，待用户与合作者确认。编号沿用 GPT Pro 会话中的三问结构（Q1 可验算证书，Q2 不可消除的伪临界，Q3 确定性边界），与 `paper-structure-2026-10-16.md` 中的 Q0–Q3 编号不同；后者尚未更新。Q3 结论依据 [Q3 证明报告](../gpt-proofs/Q3-deterministic-frontier-proof-report-2026-10-16.md)，该报告尚未独立审核。
+
+第一版把 Q3 写成“按方向挑选并列次梯度值一个线性因子”。这一说法错误，已撤回，原因见文末。
+
+## 主线
+
+所有问题围绕一个问题展开：**DCA 停下来报告“已接近临界”，这个信号有多可信？**
+
+- Q1：能可靠地算出来，代价最优。
+- Q2：算得再准，信号本身也可能是错的，换分解也没用。
+- Q3：同样的分量信息里，还藏着能纠正这种错误的东西；纠正的代价是近线性维数，而且省不掉。
 
 ## 读者需要先看到的地图
 
-| 函数类 | 随机算法 | 确定性算法 |
+| 函数类 | 随机 | 确定性 |
 |---|---|---|
-| 弱凸 | — | Moreau 驻点 $\Theta(\varepsilon^{-4})$：Davis–Drusvyatskiy 上界，Li–Pan 下界 |
-| 一般 Lipschitz | Goldstein 驻点，维数无关（Zhang 等 2020；Davis 等 2022） | Goldstein 驻点需维数指数代价（Kornowski 2609.23837） |
-| 分量有界 DC | 扰动后分量几乎必然可微，回到随机情形 | **本文** |
+| 弱凸 | — | $\Theta(\varepsilon^{-4})$ |
+| 一般 Lipschitz | Goldstein 维数无关 | 维数指数代价（Kornowski 2609.23837） |
+| 分量有界 DC，普通分量查询 | 扰动后几乎必然可微，维数无关 | **L1 维数无关；L2 为 $\widetilde\Theta(n)$（本文）** |
 
-核心问题：DC 类比弱凸类大得多，结构却远比一般 Lipschitz 函数丰富。只用 DCA 实际调用的信息，弱凸世界里的确定性结论还能保住多少？保不住的部分，代价究竟是多少？
+## 三个转折
 
-## 四个转折
+**Q1。** 两个分量都非光滑时，DC 文献的标准停机准则（同点近似临界）在有限时间内达不到。然而不必两侧都放松：只放松正侧，负侧保持精确，就能以 $\Theta(\varepsilon^{-4})$ 次确定性查询显式输出可验算证书，代价与弱凸情形相同。已有 DCA 速率要么假设负侧光滑，要么按精确子问题计数；本文计入全部内层成本，并给出匹配下界。
 
-**Q0。** DCA 自 1980 年代提出以来，一直以近似 DC 临界作为标准目标和停机准则，已有速率要么假设负侧光滑，要么按精确子问题计数。然而两个分量都非光滑时，这个准则在有限时间内不可达（Kornowski–Shamir 凸困难族的 DC 嵌入）。
+**Q2。** 证书误差降到零，伪临界仍然存在。Tian–So 已经指出，坏分解能把任意点变成临界点。反方向的问题是：好分解能否总把伪临界救回来？一维可以；然而从二维起不行。$F_0$ 在原点对所有凸分解都 DC 临界，Goldstein 残差却固定为 $1/\sqrt2$。
 
-**VAC。** 同点目标虽然不可达，DCA 的单步 Fenchel 间隙恒等式却直接给出了应当放松什么。由此得到三参数值松弛证书 VAC，三个容差依次对应子问题误差、负侧运输误差和对偶不匹配，不需要强凸。
+**Q3。** Q2 说明判据本身丢了信息，换分解也无济于事。但是丢掉的信息仍然藏在生成判据的分量查询里。Kong–Lewis 已有确定性 DC Goldstein 算法，然而它要求 oracle 直接给出原目标 $F$ 的方向导数和属于 $\partial_C F$ 的相容向量（Prop. 2.4 的选择）。本文只用 $\phi,g$ 的值与对抗选择的任意次梯度。
 
-**Q1。** Tian–So 已经指出，坏的分解能把任意点变成临界点。反方向的问题是：好的分解能否总把伪临界消除？一维可以（Jordan 分解）。然而从二维起，$F_0=\max\{0,x_1,x_2\}-\max\{0,-x_1,-x_2\}$ 在原点对**所有**凸分解都 DC 临界，却不是 Clarke 驻点。因此这一缺陷属于 DC 临界本身，不是 VAC 造成的。负侧光滑时，VAC 推出 Moreau 驻点，并确定校准尺度 $\delta\sim\varepsilon^2$。
-
-**Q2。** 失去弱凸后，确定性方法一般要付出高昂代价；然而在分量有界的 DC 类上，确定性方法以 $\Theta(\varepsilon^{-4})$ 次基本查询达到 VAC，与弱凸情形相同。即使每次返回两个分量的完整次微分，也不能更快（Li–Pan 实例加有界凸化项 $c_N$，不泄露隐藏坐标）。DC 文献中的 $\varepsilon^{-2}$ 计的是精确子问题次数，分解本身不带来加速。
-
-**Q3。**
-1. 在一般 Lipschitz 函数上，随机化带来指数级优势。DC 结构几乎能把这份优势全部收回：Kong–Lewis 的方向 oracle 算法在统一有界的 DC 类上与维数无关。与 Kornowski 合起来可知，指数困难族不能保持统一的分量界。这一结构性认识归功于 Kong–Lewis。
-2. 然而，这一收回依赖一项 DCA 从不调用的能力：按外层指定的方向，在并列次梯度中作选择（direction-aware tie-breaking）。潜变量结构化 SVM 的推断模块只返回一个 argmax，并不提供这项能力。
-3. 我们证明，放弃这项能力、只用普通分量查询，确定性方法仍能达到原目标的 Goldstein 驻点（局部纯化），维数代价为 $\widetilde O(n)$；同时 $\Omega(n)$ 不可避免。
-4. 合起来：DC 类上，随机算法的维数代价为 0；确定性算法配合方向选择，维数代价也为 0；确定性算法面对对抗性选择，代价为 $\widetilde\Theta(n)$；一般 Lipschitz 类上为指数级。随机扰动起作用的方式正是让并列消失，所以**在 DC 类上，确定性的维数代价恰好等于挑选并列次梯度的代价，量级是线性的。**
+- 方法：研究 $\phi-g$，却用凸函数 $\phi+g$ 来控制。$\operatorname{width}_i(\partial\phi-\partial g)=\operatorname{width}_i(\partial\phi+\partial g)$，凸函数次梯度的单调性允许逐坐标二分。算法不去挑选有利的回答，而是寻找一个位置，让所有合法回答都可靠（局部纯化）。
+- 代价：L1（分量差的邻域证书）维数无关；L2（$F$ 的 Goldstein）满足 $\Omega(n)\le N\le O(n\log n)$。
+- 联系：$\Omega(n)$ 下界的困难实例，正是 Q2 的 $F_0$ 藏进算法未探测的二维子空间。同一个几何障碍，同时解释了表示失真和计算代价。
+- 全景：随机化在一般 Lipschitz 函数上值指数级；在 DC 类上，用普通分量查询时只值近线性的维数因子，而且恰好就是越过伪临界缺口（从 L1 到 L2）的价格。不越过时，确定性方法不付维数代价。
 
 ## 中文摘要草稿
 
-DCA 以近似 DC 临界作为标准目标与停机准则。尽管这一准则沿用已久，但是当两个凸分量都非光滑时，我们证明它在有限时间内不可达。为此，我们从 DCA 自身的下降恒等式读出值松弛临界证书 VAC，三个容差分别对应子问题误差、负侧运输误差与对偶不匹配。VAC 会被伪临界点满足。通常认为换一个更好的分解就能修复这一点；然而我们证明，这在一维成立，从二维起失效：存在对所有凸分解都 DC 临界、却不是 Clarke 驻点的点，因此缺陷属于 DC 临界本身。失去弱凸性后，确定性方法一般要付出高昂代价；但是在分量有界的 DC 类上，确定性方法以 $\Theta(\varepsilon^{-4})$ 次基本查询达到 VAC，与弱凸情形相同，即使给出两个分量的完整次微分也不能更快。最后，我们刻画随机化在 DC 类上的价值。在一般 Lipschitz 函数上，确定性代价随维数指数增长；在 DC 类上，只要能按方向挑选并列次梯度，确定性方法就与维数无关。DCA 的普通分量查询不具备这项能力。我们用局部纯化，仅凭两个分量的函数值与任意次梯度，确定性地达到原目标的 Goldstein 驻点，维数代价为 $\widetilde O(n)$，并证明 $\Omega(n)$ 不可避免。
+DCA 停止时报告的近似临界性，究竟能保证什么？尽管两个凸分量都非光滑时，标准的同点临界准则在有限时间内不可达，但是我们证明，只需放松正侧、保持负侧精确，确定性方法就能以 $\Theta(\varepsilon^{-4})$ 次查询显式输出可验算的证书，与弱凸情形的最优代价相同。然而证书再精确也可能误导：通常认为伪临界可以通过换分解消除，我们证明这在一维成立，从二维起失效，存在对所有凸分解都 DC 临界、却远离 Goldstein 驻点的点。即便如此，DCA 使用的普通分量查询仍然足以越过这一缺口。已有确定性方法依赖原目标的方向与 Clarke 信息，我们则利用凸函数 $\phi+g$ 控制差函数 $\phi-g$ 的次梯度失真，仅凭两个分量的函数值与任意次梯度，确定性地达到原目标的 Goldstein 驻点。固定其余参数时，维数代价为 $O(n\log n)$，而 $\Omega(n)$ 不可避免；其困难实例正是上述二维伪临界结构。在一般 Lipschitz 函数上，确定性的代价是维数的指数；在 DC 类上，这一代价降为近线性，并且恰好等于越过伪临界缺口的价格。
 
 ## 英文开头草稿
 
-Losing weak convexity is widely believed to doom deterministic methods: for general Lipschitz functions, determinism costs exponentially in the dimension. We show that difference-of-convex structure reverses most of this picture, and we pin down exactly what remains lost. The standard DC stopping rule is unreachable in finite time once both components are nonsmooth, yet a certificate read off the DCA descent identity is reachable at the weakly convex rate $\Theta(\varepsilon^{-4})$. For Goldstein stationarity, the whole dimensional price of determinism is the price of breaking ties among component subgradients, and that price is linear.
+When DCA stops and reports near-criticality, what has it certified? We show that the answer can be computed at the weakly convex optimal rate, that it can be wrong under every convex decomposition from dimension two on, and that the very component queries DCA uses already contain the information needed to correct it. Correcting it costs a near-linear factor in the dimension, and no deterministic method can avoid a linear factor. For general Lipschitz functions, determinism costs exponentially in the dimension; for DC functions, its entire dimensional price is the price of crossing the pseudo-critical gap.
 
-## 对 GPT Pro 核验的判断
+## 第一版的错误：按方向挑选并列次梯度不能消除维数代价
 
-- 第 1 节的分解代数正确：$\min_i h_i=S-Q$，$\max\{L(S-Q),-\Delta\}=\max\{LS,LQ-\Delta\}-LQ$，常数 $LT$ 与 $L(T-1)$。前提（最终构造的形式、$h_i$ 凸且 1-Lipschitz）待对照原文。
-- 第 2 节的一维推导在其前提下正确：$q'_+(s_{i+1})\ge q'_-(s_{i+1})\ge q'_+(s_i)+L$，于是 $\operatorname{Lip}(g)\ge L(T-1)/2$。薄弱处在前提：需要各中心附近的局部斜率都沿同一方向 $\mathbf e_1$ 取 $L$。如果构造在不同查询点使用不同（如近正交）的梯度方向，推导就不成立。该节不是必需的，正文不宜依赖它。
-- 第 3 节才是一般论证，即原 K7：若局部 oracle 能模拟方向 oracle（Tian–So Remark 1，待核），则 Kornowski 对 Kong–Lewis 算法构造的困难实例不能落在常数固定的 DC 类中。此前“两者 oracle 不同、不存在矛盾”的更正本身有误；K7 在上述条件下成立。
-- 由此推出的叙事后果正确：“指数降到线性”不能写成本文贡献，结构性收回属于 Kong–Lewis。普通分量 oracle 与 $F$ 的方向 oracle 确实不可比；把对照改成“同一分量 oracle，只差是否按方向挑选并列次梯度”，两者就成为嵌套关系，分离结论也就干净了。
+在 $\Omega(n)$ 的困难实例中，查询点满足 $Px=0$，此时 $\partial\phi(x)=\operatorname{conv}\{0,a,b\}$，$\partial g(x)=\operatorname{conv}\{0,-a,-b\}$。如果对抗者把 $a,b$ 选成同时与全部查询点和全部指定方向 $d$ 正交，那么按 $d$ 逐分量挑选时，两边都是平局，返回 $u=v=0$ 仍然合法，算法同样被骗。Kong–Lewis 的 L2 保证要求返回的向量属于 $\partial_C F(x)=\operatorname{conv}\{a,b,a+b\}$；这样的向量不能由分量层面的方向选择得到。因此，$\widetilde\Theta(n)$ 是“从分量差得到忠实于 $\partial_C F$ 的信息”的价格，而不是方向选择的价格。潜变量 SVM 的应用动机相应改为：推断程序给出分量次梯度，却不提供原目标的 Clarke 信息。
+
+## 对 GPT Pro K7 核验的判断
+
+- 显式分解的代数正确；$\operatorname{Lip}(g)\ge L(T-1)/2$ 的一维推导，依赖各中心局部斜率沿同一方向这一前提，正文不宜依赖它。
+- 真正的一般论证是：局部 oracle 能给出 Prop. 2.4 意义下属于 Clarke 次微分的方向相容向量（Q3 报告第 723 行附近给出这一读法），因此 Kornowski 针对 Kong–Lewis 算法构造的困难实例，不能落在常数固定的 DC 类中。此前“oracle 不同、不存在矛盾”的更正有误。
+- 叙事后果：“DC 结构打破指数障碍”归功于 Kong–Lewis；本文的增量在于普通分量查询、局部纯化，以及 L1/L2 的维数分离。
 
 ## 待核
 
-1. Kong–Lewis Oracle 2.5 是否要求返回向量属于 $\partial_C F(x)$。若不要求，$G=u_d-v_d$（$u_d\in\operatorname{argmax}_{u\in\partial\phi(x)}\langle u,d\rangle$，$v_d$ 同理）即可实现它，“方向选择下维数无关”直接成立；若要求，需另证。
-2. Tian–So Remark 1 与 Kornowski 局部 oracle 的包含关系。
-3. Q3 上下界证明稿入库并审核；$\Omega(n)$ 适用的参数范围。
-4. Kornowski 2609.23837 第 4 节构造的具体形式。
+1. Q1 速率：本会话材料写 $(\varepsilon^2,0,\varepsilon)$ 证书为 $\Theta(\varepsilon^{-4})$；`paper-structure-2026-10-16.md` §6.4 写 $\delta_g=0$ 时代价为 $O(\Delta B^2\delta_\phi^{-1}\varepsilon^{-3})$，取 $\delta_\phi=\varepsilon^2$ 即为 $\varepsilon^{-5}$。需要以最新证明为准，统一二者。
+2. Q3 证明报告的独立审核：纯化引理，以及纯化与线搜索的衔接。
+3. 一维 Jordan 分解的结论仍标为待核。
+4. Kong–Lewis Oracle 2.5 与 Prop. 2.4 原文；Kornowski 2609.23837 第 4 节构造。
