@@ -19,6 +19,7 @@
 - Q3 定位修正（助手判断，待核）：K7 推理成立（局部 oracle 可给出 Prop. 2.4 意义下的 Clarke 方向信息），“DC 结构打破指数障碍”归功于 Kong–Lewis。GPT Pro 证明稿给出：普通分量 oracle 下，L1 维数无关；L2 满足 $\Omega(n)\le N\le O(n\log n)$，下界实例是 $F_0$ 嵌入未探测子空间。报告已入库为 [Q3 证明报告](../gpt-proofs/Q3-deterministic-frontier-proof-report-2026-10-16.md)，尚未独立审核。此前“按方向挑选并列次梯度值一个线性因子”的说法已撤回。转折版叙事见 [narrative-turns](../project/narrative-turns-2026-10-16.md)；结构文件 §6.4 的 $\varepsilon^{-5}$ 已过时。
 - 全文逻辑核查（GPT Pro，未独立审核）：$(\varepsilon^2,0,\varepsilon)$-VAC 确定性复杂度加强为 $\Theta(\varepsilon^{-4})$，可显式输出见证；$F_0$ 的几何机制属极小对理论，须引用；需删去“此前没人问过同点临界”（Xu 等）与“弱凸之外首个紧确定性复杂度”（Tian–So）。证明与总结见 [logic-audit proofs](../gpt-proofs/dca-logic-audit-proofs-2026-10-16.md)、[summary](../gpt-proofs/dca-logic-audit-summary-2026-10-16.md)。
 - 纯化新颖性待核：须与 Nesterov 2005 字典序微分、Khan–Barton LD-derivative（沿 $n$ 个方向确定性地得到 Clarke 型元素）比较，见 narrative-turns 末节。
+- 三问的英文定理表述草案与文献对比段落见 [theorem-statements](../project/theorem-statements-2026-10-16.md)，每条标注已核或待审。
 - 讨论后的论文结构（主线：确定性方法在弱凸之外能否保住 $\Theta(\varepsilon^{-4})$；Q0 不可达 → VAC → Q1 含义 → Q2 确定性上下界 → Q3 确定性边界，按出现顺序编号）见 [论文结构](../project/paper-structure-2026-10-16.md)。尚待用户与合作者确认。全文逻辑与新见解核查 prompt：[gptpro-logic-and-insight-audit-prompt](../prompts/gptpro-logic-and-insight-audit-prompt.md)。
 
 ## 用户已确定的方向
