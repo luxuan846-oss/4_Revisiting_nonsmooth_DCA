@@ -74,3 +74,15 @@ When DCA stops and reports near-criticality, what has it certified? We show that
 2. Q3 证明报告的独立审核：纯化引理，以及纯化与线搜索的衔接。
 3. 一维 Jordan 分解的结论仍标为待核。
 4. Kong–Lewis Oracle 2.5 与 Prop. 2.4 原文；Kornowski 2609.23837 第 4 节构造。
+
+## 三问递进与贯穿主角（第三版，助手建议）
+
+骨架沿用 GPT Pro 的“先排除没算好，再排除分解选错，最后问信息够不够”。补充一个贯穿三问的对象：**shared kink（公共折痕）**，即 $\phi$ 与 $g$ 在同一点都不可微。
+
+- 背景：$g$ 为 $\rho$-光滑时，$F$ 是 $\rho$-弱凸的；DC 超出弱凸的部分全部来自 $g$ 的折痕。
+- 公共折痕引理（标准 Clarke 计算，助手已核）：若 $\phi$ 或 $g$ 在 $x$ 可微，则 $\partial\phi(x)-\partial g(x)=\partial_C F(x)$。因为凸函数在可微点严格可微，Clarke 和法则此时取等号。所以精确 DC 临界与 Clarke 驻点只可能在公共折痕上分家。
+- Q1：负侧精确，因为 DCA 用精确查询到的 $v$ 线性化 $g$，误差全在正侧子问题。证书的含义是当前凸模型 $m_x$ 在半径 $R$ 内最多还能降 $\delta+\varepsilon R$。凹折痕不增加认证代价。留下的疑问：模型与 $F$ 之差是 $g$ 的线性化误差，它在 $g$ 的折痕处是一阶量，而这恰好是超出弱凸的部分。
+- Q2：一维用 Jordan 分解 $D^2F=\mu^+-\mu^-$，处处没有公共折痕，一个分解修好所有点；二维 $F_0=\sigma_T-\sigma_{-T}$，极小对理论迫使任意分解都在原点形成拆不开的公共折痕。
+- Q3：公共折痕在 $\phi-g$ 中抵消，在凸函数 $\phi+g$ 中叠加，$\operatorname{width}_i(A-C)=\operatorname{width}_i(A+C)$；单调性允许二分。下界把拆不开的公共折痕 $F_0$ 藏进未探测平面，上界逐坐标扫描，两者机制对偶。L1 不需要看穿公共折痕，所以维数无关。
+- 四种关系：递进（三种解释依次排除）；包含（$\mathrm{L2}\Rightarrow\mathrm{L1}\Rightarrow\mathrm{VAC}$）；同一主角；互为证据（Moreau 校准支撑 Q1 下界，$F_0$ 成为 Q3 下界）。Q1 与 Q3 之间不是“先求 VAC 再升级”的算法流水线。
+- 全景表中“一般 Lipschitz 没有凸的和函数可以扫描，所以是指数级”属于解释性推断，不是定理。
