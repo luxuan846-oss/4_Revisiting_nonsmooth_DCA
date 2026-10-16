@@ -6,6 +6,18 @@
 
 用户希望理解一般非光滑、弱凸优化与 DC/DCA 的联系，核心困难是下界怎样证明。优先沿 2020 非光滑驻点、Li–Pan 2026 弱凸下界、Buzaglo–Kornowski 2026 及 Liu et al. 2024 中可用于无约束 DC 问题的方法推进。详见 [研究问题与候选路线](../project/lower-bound-research-direction.md)。指令按用户要求精简，以主动推导和推进方案为主。
 
+## 2026-10-16 候选研究问题核查
+
+依据 GPT Pro 评议和后续讨论，做了一轮定向文献核查，报告见 [候选问题文献核查](../../../literature/question_selection_2026-10-16/候选问题文献核查.md)。
+
+- N2（DCA 避开伪临界点）：2026 年 Feng–Yuan、Niu、Le Thi 等三篇已证明随机化 DCA 几乎必然收敛到 d-stationary 点，放弃。
+- N1（交集与包含）：检验侧已由 Tian–So (SODA 2025) 解决，并入问题一。
+- GPT Pro 主推的 $\Theta(\varepsilon^{-4})$（VAC 两类相同）属于预期结果，降为基线。
+- 助手建议的主问题（待用户确认）：问题一，分解无关性的价格（VAC 对比 Goldstein，有界 DC 类）；问题二，DC 类上的确定性价格（Kong–Lewis 的 $\varepsilon^{-1}$ 差距）。
+- “VAC 是最强可计算目标”不成立：Goldstein 驻点严格更强，且在 DC 类上有限时间可算。
+- 结合 GPT Pro 第二轮评议后调整：主线改为“普通分量 oracle 下 DC 结构能否打破确定性 Goldstein 的指数障碍”。助手推导两点（待核）：(1) Kornowski 2609.23837 的指数困难实例不在有界 DC 类中，否则与 Kong–Lewis 的维数无关上界矛盾；(2) $F_0=\max\{0,x_1,x_2\}-\max\{0,-x_1,-x_2\}$ 在原点对**所有**凸分解都 DC 临界，但不是 Clarke 驻点，证明见 [gpt-proofs](../gpt-proofs/irremovable-pseudo-criticality-2026-10-16.md)。
+- 讨论后的论文结构（主线：确定性方法在弱凸之外能否保住 $\Theta(\varepsilon^{-4})$；Q0 不可达 → VAC → Q1 含义 → Q2 确定性上下界 → Q3 确定性边界，按出现顺序编号）见 [论文结构](../project/paper-structure-2026-10-16.md)。尚待用户与合作者确认。全文逻辑与新见解核查 prompt：[gptpro-logic-and-insight-audit-prompt](../prompts/gptpro-logic-and-insight-audit-prompt.md)。
+
 ## 用户已确定的方向
 
 - 与苏文藻老师合作本篇非光滑 DC 论文。

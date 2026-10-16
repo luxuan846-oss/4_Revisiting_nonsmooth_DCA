@@ -21,3 +21,6 @@ __pycache__/
 *.thm
 outputs/
 .claude/settings.local.json
+
+# Local historical archive exceeds GitHub's regular Git file size limit.
+/oldversion/4_nonsmooth_DCAM.zip
