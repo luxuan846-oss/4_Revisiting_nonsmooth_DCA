@@ -18,7 +18,7 @@
 
 ## 可直接发送的任务
 
-请作为熟悉非光滑优化、DC 结构与 oracle 复杂度的研究合作者，为我们与苏文藻老师合作的已有初稿做文献调研。中文写报告，BibTeX 用英文。目标期刊为 Mathematical Programming 或 JMLR。
+请作为熟悉非光滑优化、DC 结构与 oracle 复杂度的研究合作者，为我们与苏文藻老师合作的已有初稿做文献调研。中文写报告，BibTeX 用英文。目标期刊为 Mathematical Programming 或 JMLR。本文聚焦无约束的双侧非光滑 DC 优化，文献比较与证明路线均围绕这一范围展开。
 
 **我们的核心直觉：非光滑性增加了多少计算难度？DC 结构能减少哪部分难度？DCA 能否利用这种结构？** 当前最需要帮助的是下界怎么证明，以及一般非光滑和弱凸优化的结果怎样用于 DC。
 
@@ -28,7 +28,7 @@
 
 1. Zhang et al. 2020，非光滑非凸驻点复杂度：用户最初的启发来源，暂据项目材料定位为 https://proceedings.mlr.press/v119/zhang20p.html 。
 2. Li–Pan 2026，弱凸最优确定性 oracle 复杂度：https://arxiv.org/abs/2608.03246 。
-3. Buzaglo–Kornowski 2026，带约束非光滑随机优化：https://arxiv.org/abs/2610.13787 ，及其引用的 Liu–Chen–Luo–Low 2024：https://proceedings.mlr.press/v235/liu24j.html 。
+3. Buzaglo–Kornowski 2026：https://arxiv.org/abs/2610.13787 ，及其引用的 Liu–Chen–Luo–Low 2024：https://proceedings.mlr.press/v235/liu24j.html 。重点借鉴其中可用于无约束 DC 问题的驻点概念与复杂度分析方法。
 4. 9 月 27 日周报中的 Nemirovski–Yudin、Carmon zero-chain、Pan–Zheng–Li minimax 下界：https://arxiv.org/abs/2609.14235 。
 5. 直接相关的 DCA-PAGE、Bregman DCA、MDCA、随机与非精确 DCA、DC envelope 等工作。
 

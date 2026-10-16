@@ -57,3 +57,24 @@ python3 tools/package_gpt_tasks.py
 输出位于 `outputs/gpt/`。将对应 ZIP 解压后上传给 GPT，并粘贴该任务的指令。附件含未发表稿件与项目讨论，仅用于本次研究协作。
 
 原工作目录中的材料保持原位。迁移来源与未纳入项见 [整理记录](overleaf/notes/progress/REORGANIZATION_20261016.md)。
+
+
+# Stochastic DCAM
+
+## Project Focus
+
+This project currently focuses on the following research directions:
+
+- Zotero literature related to **stochastic** optimization.
+- **Stochastic DC programming** and stochastic difference-of-convex methods.
+- **DC programming** for nonsmooth and composite optimization.
+- **Nonsmooth optimization**, especially stationarity, convergence, and complexity analysis.
+
+## Reading Priority
+
+When reviewing papers or notes for this project, prioritize work connected to:
+
+- stochastic approximation and stochastic first-order methods;
+- DC decomposition, majorization-minimization, and proximal updates;
+- Clarke stationarity, limiting stationarity, and weak convexity;
+- unconstrained nonconvex nonsmooth and composite optimization.
