@@ -86,3 +86,9 @@ When DCA stops and reports near-criticality, what has it certified? We show that
 - Q3：公共折痕在 $\phi-g$ 中抵消，在凸函数 $\phi+g$ 中叠加，$\operatorname{width}_i(A-C)=\operatorname{width}_i(A+C)$；单调性允许二分。下界把拆不开的公共折痕 $F_0$ 藏进未探测平面，上界逐坐标扫描，两者机制对偶。L1 不需要看穿公共折痕，所以维数无关。
 - 四种关系：递进（三种解释依次排除）；包含（$\mathrm{L2}\Rightarrow\mathrm{L1}\Rightarrow\mathrm{VAC}$）；同一主角；互为证据（Moreau 校准支撑 Q1 下界，$F_0$ 成为 Q3 下界）。Q1 与 Q3 之间不是“先求 VAC 再升级”的算法流水线。
 - 全景表中“一般 Lipschitz 没有凸的和函数可以扫描，所以是指数级”属于解释性推断，不是定理。
+
+## 纯化方法的新颖性近邻（助手提出，待核）
+
+- 局部纯化中的 Goldstein 下降、最小范数元更新与线搜索框架都属已有技术（Goldstein 1977；Zhang 等 2020；Davis 等 2022；Kong–Lewis 2024）。可能的新部分是：用 $\phi+g$ 的单调性逐坐标二分，在嵌套小球内控制全部合法分量差。
+- 必须比较的近邻：Nesterov, *Lexicographic differentiation of nonsmooth functions*, Math. Program. 2005；Khan–Barton 的 LD-derivative 与 vector forward mode AD（Optim. Methods Softw. 2015 前后）。它们沿 $n$ 个方向逐次求方向导数，确定性地得到一个 Clarke 型广义导数，代价同样约为 $n$；但所用 oracle 是方向导数或 AD，不是普通分量次梯度。另需比较 Tian–So SODA 2025 与 Guzmán 等 arXiv 2403.16317。
+- 术语：建议用 kink（折点、折痕），不用“尖点”。cusp 在数学上通常指 $|x|^{2/3}$ 这类非 Lipschitz 的点。
