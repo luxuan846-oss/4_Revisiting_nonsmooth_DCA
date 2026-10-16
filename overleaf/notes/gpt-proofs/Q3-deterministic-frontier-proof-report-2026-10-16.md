@@ -1,4 +1,4 @@
-> 来源：GPT Pro 会话（用户分享链接 chatgpt.com/share/6ad27f37-6e44-83e9-8f5b-5a3e04628189）中生成的报告，2026-10-16 由助手原样提取入库，仅应用该会话自身的后续文字修订。尚未独立审核；配套脚本 `Q3_sanity_checks.py` 未包含在分享页中。
+> 来源：用户上传的 GPT Pro 报告完整版（较分享页提取版更完整），2026-10-16 入库。尚未独立审核；配套脚本 `Q3_sanity_checks.py` 未入库。
 
 # Q3：普通分量 oracle 下的确定性边界
 
@@ -14,7 +14,7 @@
 |---|---|---|
 | K7 | 部分结果 | 有限的 Kornowski 抵抗实例确实是全局 Lipschitz DC；已给出分量界随实例长度增长的分解。其整个困难族不能同时具有统一受控的非凸模。不能由此断言每个任意实例的最优分解常数都大。 |
 | H1 | 已证明 | L1 可在普通分量 oracle 下确定性、维数无关地达到。 |
-| H2(a) | 已证明 | 在固定类 \(\mathcal D(3,1,1)\) 中，固定 \(r=1/2,\varepsilon=1/4\)，L2 需要至少 \(n-2\) 次最坏情形查询。 |
+| H2(a) | 已证明 | 在固定类 \(\mathcal{D}(3,1,1)\) 中，固定 \(r=1/2,\varepsilon=1/4\)，L2 需要至少 \(n-2\) 次最坏情形查询。 |
 | H2(b) | 否证 | “L2 不存在依赖维数的多项式确定性方法”被下文构造的上界否证。 |
 | H3(a) | 否证 | 维数无关的确定性 L2 方法被 H2(a) 否证。 |
 | H3(b) | 已证明 | 一个确定性的局部纯化过程，与稳健的线搜索结合，给出多项式查询上界。 |
@@ -36,15 +36,15 @@ O\!\left[
 \left(1+\frac{B^2}{\varepsilon^2}\right)
 \left(
 1+\frac{B}{\varepsilon}
-+n\log\!\left(2+\frac{B\sqrt n}{\varepsilon}\right)
++n\log\!\left(2+\frac{B\sqrt{n}}{\varepsilon}\right)
 \right)
 \right].
 \]
 这是一条可达性上界，不主张其精度依赖最优。
 
-**定理 3：L2 下界。** 固定 \(0<r<1\) 和 \(0<\varepsilon<1/\sqrt2\)。对任意维数 \(n\ge3\)、任意最多查询 \(T\le n-3\) 次的确定性算法，存在一个固定函数对
+**定理 3：L2 下界。** 固定 \(0<r<1\) 和 \(0<\varepsilon<1/\sqrt{2}\)。对任意维数 \(n\ge3\)、任意最多查询 \(T\le n-3\) 次的确定性算法，存在一个固定函数对
 \[
-(\phi,g)\in\mathcal D(3,1,1)
+(\phi,g)\in\mathcal{D}(3,1,1)
 \]
 及合法 oracle，使算法的输出点不满足 L2。输出点不必是已查询点。
 
@@ -72,10 +72,10 @@ u\in\partial\phi(x),\quad v\in\partial g(x).
 
 用以下记号避免混淆：
 \[
-D_r(x)=\operatorname{conv}\!\bigcup_{y\in\overline B_r(x)}
+D_r(x)=\operatorname{conv}\!\bigcup_{y\in\overline{B}_r(x)}
 \bigl(\partial\phi(y)-\partial g(y)\bigr),
 \qquad
-C_r(x)=\operatorname{conv}\!\bigcup_{y\in\overline B_r(x)}\partial_C F(y).
+C_r(x)=\operatorname{conv}\!\bigcup_{y\in\overline{B}_r(x)}\partial_C F(y).
 \]
 L1 要求 \(\operatorname{dist}(0,D_r(x))\le\varepsilon\)，L2 要求 \(\operatorname{dist}(0,C_r(x))\le\varepsilon\)。采用闭球；下文 L2 的样本实际上位于球内部。
 
@@ -89,7 +89,7 @@ L1 要求 \(\operatorname{dist}(0,D_r(x))\le\varepsilon\)，L2 要求 \(\operato
 
 ### 2.2 L1 蕴含 L0
 
-取 \(y\in\overline B_r(x)\) 和 \(u\in\partial\phi(y)\)。全局 Lipschitz 界给出 \(\|u\|\le G_\phi\)。对任意 \(z\)，
+取 \(y\in\overline{B}_r(x)\) 和 \(u\in\partial\phi(y)\)。全局 Lipschitz 界给出 \(\|u\|\le G_\phi\)。对任意 \(z\)，
 \[
 \begin{aligned}
 \phi(z)
@@ -103,14 +103,14 @@ L1 要求 \(\operatorname{dist}(0,D_r(x))\le\varepsilon\)，L2 要求 \(\operato
 
 若 \(w=\sum_j\lambda_j(u_j-v_j)\in D_r(x)\)，其中两个见证使用同一个 \(y_j\)，令
 \[
-\bar u=\sum_j\lambda_j u_j,\qquad
-\bar v=\sum_j\lambda_j v_j.
+\bar{u}=\sum_j\lambda_j u_j,\qquad
+\bar{v}=\sum_j\lambda_j v_j.
 \]
 近似次微分是凸集，所以
 \[
-\bar u\in\partial_{2G_\phi r}\phi(x),\qquad
-\bar v\in\partial_{2G_g r}g(x),\qquad
-\bar u-\bar v=w.
+\bar{u}\in\partial_{2G_\phi r}\phi(x),\qquad
+\bar{v}\in\partial_{2G_g r}g(x),\qquad
+\bar{u}-\bar{v}=w.
 \]
 这证明题设两步蕴含。有限维、全空间 Lipschitz 凸函数的次微分图闭且有界，因此这里相应的并集与凸包在闭球上紧，距离下确界能够达到。
 
@@ -172,7 +172,7 @@ k\sigma\le2G_g.
 
 设 \(\|w\|,\|p\|\le B\)、\(w\ne0\)，且
 \[
-\langle p,w\rangle\le\tfrac12\|w\|^2.
+\langle p,w\rangle\le\tfrac{1}{2}\|w\|^2.
 \]
 令 \(w^+\) 为线段 \([w,p]\) 中的最小范数向量。它可通过一维二次函数的截断极小点精确计算。
 
@@ -187,7 +187,7 @@ k\sigma\le2G_g.
 \]
 若 \(w^+\ne0\)，则
 \[
-\frac1{\|w^+\|^2}\ge\frac1{\|w\|^2}+\frac1{16B^2}.
+\frac{1}{\|w^+\|^2}\ge\frac{1}{\|w\|^2}+\frac{1}{16B^2}.
 \]
 所以不超过 \(\lceil16B^2/a^2\rceil\) 次这类更新后，向量范数必定不大于 \(a\)。
 
@@ -208,7 +208,7 @@ k\sigma\le2G_g.
    \]
    此时
    \[
-   \frac{h(r)-h(0)}r<\varepsilon/3-\varepsilon/2=-\varepsilon/6.
+   \frac{h(r)-h(0)}{r}<\varepsilon/3-\varepsilon/2=-\varepsilon/6.
    \]
    使用 A.1，只需检验 oracle 实际返回的
    \[
@@ -250,22 +250,22 @@ N_{L1}\le D_1\bigl[1+(I_1+1)(K_1+3)\bigr]. \tag{A4}
 \]
 查询次数至多
 \[
-Q(n,B,s)=n\left(\left\lceil\log_2\frac{4B\lceil\sqrt n\rceil}{s}\right\rceil+2\right)+1. \tag{B2}
+Q(n,B,s)=n\left(\left\lceil\log_2\frac{4B\lceil\sqrt{n}\rceil}{s}\right\rceil+2\right)+1. \tag{B2}
 \]
-全部查询点均在 \(\overline B_\tau(z)\) 内。
+全部查询点均在 \(\overline{B}_\tau(z)\) 内。
 
 ### B.2 算法
 
 令
 \[
-H=\phi+g,\qquad k=\lceil\sqrt n\rceil,\qquad
+H=\phi+g,\qquad k=\lceil\sqrt{n}\rceil,\qquad
 J=\left\lceil\log_2\frac{4Bk}{s}\right\rceil.
 \]
 普通查询给出的 \(u+v\) 属于 \(\partial H\)，且范数不超过 \(B\)。初始化 \(c=z,R=\tau\)。逐个处理坐标 \(i=1,\ldots,n\)。
 
 1. 查询端点
    \[
-   a=c-\frac R2 e_i,\qquad b=c+\frac R2 e_i.
+   a=c-\frac{R}{2} e_i,\qquad b=c+\frac{R}{2} e_i.
    \]
    记实际返回的 \(H\) 次梯度为 \(A,C\)，并存储 \(\alpha=A_i,\beta=C_i\)。
 2. 做 \(J\) 次二分。查询当前中点 \(m\)，得到 \(M\in\partial H(m)\)。若
@@ -295,10 +295,10 @@ J=\left\lceil\log_2\frac{4Bk}{s}\right\rceil.
 
 ### B.4 从线段端点控制整个小球
 
-设最终区间端点为 \(a=c^+-\ell e_i/2\)、\(b=c^++\ell e_i/2\)。取任意 \(x\in\overline B_{R^+}(c^+)\)、任意 \(W\in\partial H(x)\)。与左端点的单调性给出
+设最终区间端点为 \(a=c^+-\ell e_i/2\)、\(b=c^++\ell e_i/2\)。取任意 \(x\in\overline{B}_{R^+}(c^+)\)、任意 \(W\in\partial H(x)\)。与左端点的单调性给出
 \[
 0\le\langle W-A,x-a\rangle
-=\frac\ell2(W_i-\alpha)+\langle W-A,x-c^+\rangle.
+=\frac{\ell}{2}(W_i-\alpha)+\langle W-A,x-c^+\rangle.
 \]
 由于 \(\|W-A\|\le2B\)，得到
 \[
@@ -362,8 +362,8 @@ m=\left\lceil\frac{16B}{a}\right\rceil+1,
 查询全部网格点，并对 \(1\le j\le m-1\) 计算
 \[
 S_j=
-\frac{\phi(z_{j+1})-\phi(z_j)}h
--\frac{g(z_j)-g(z_{j-1})}h.
+\frac{\phi(z_{j+1})-\phi(z_j)}{h}
+-\frac{g(z_j)-g(z_{j-1})}{h}.
 \]
 精确求和得到
 \[
@@ -374,30 +374,30 @@ S_j=
 \]
 因此某个最小值索引 \(j\) 满足
 \[
-S_j<\frac a3+\frac{B+a/3}{m-1}\le\frac{5a}{12}. \tag{C1}
+S_j<\frac{a}{3}+\frac{B+a/3}{m-1}\le\frac{5a}{12}. \tag{C1}
 \]
 最后一步使用 \(a\le B\) 和 \(m-1\ge16B/a\)。
 
-令 \(\tau=ha/(48B)\)。任取 \(y\in\overline B_\tau(z_j)\) 及 \(u\in\partial\phi(y),v\in\partial g(y)\)。正侧支撑不等式给出
+令 \(\tau=ha/(48B)\)。任取 \(y\in\overline{B}_\tau(z_j)\) 及 \(u\in\partial\phi(y),v\in\partial g(y)\)。正侧支撑不等式给出
 \[
 \phi(z_{j+1})\ge\phi(y)+\langle u,z_{j+1}-y\rangle,
 \]
 结合 \(|\phi(y)-\phi(z_j)|\le G_\phi\tau\)、\(\|u\|\le G_\phi\)，可得
 \[
 \langle u,e\rangle\le
-\frac{\phi(z_{j+1})-\phi(z_j)}h+\frac{2G_\phi\tau}{h}.
+\frac{\phi(z_{j+1})-\phi(z_j)}{h}+\frac{2G_\phi\tau}{h}.
 \]
 负侧使用 \(g(z_{j-1})\ge g(y)+\langle v,z_{j-1}-y\rangle\)，得到
 \[
 \langle v,e\rangle\ge
-\frac{g(z_j)-g(z_{j-1})}h-\frac{2G_g\tau}{h}.
+\frac{g(z_j)-g(z_{j-1})}{h}-\frac{2G_g\tau}{h}.
 \]
 相减即
 \[
 \langle u-v,e\rangle
 \le S_j+\frac{2B\tau}{h}
-\le\frac{5a}{12}+\frac a{24}
-=\frac{11a}{24}<\frac a2. \tag{C2}
+\le\frac{5a}{12}+\frac{a}{24}
+=\frac{11a}{24}<\frac{a}{2}. \tag{C2}
 \]
 这是对整个小球和任意合法 oracle 选择都成立的保证。
 
@@ -453,7 +453,7 @@ q_j\in\partial_C F(y_j),\qquad \|p_j-q_j\|\le s,
 D_2&=1+\left\lfloor\frac{12\Delta}{r\varepsilon}\right\rfloor,\\
 I_2&=\left\lceil\frac{64B^2}{\varepsilon^2}\right\rceil,\\
 m&=\left\lceil\frac{32B}{\varepsilon}\right\rceil+1,\\
-Q&=n\left(\left\lceil\log_2\frac{8B\lceil\sqrt n\rceil}{\varepsilon}\right\rceil+2\right)+1.
+Q&=n\left(\left\lceil\log_2\frac{8B\lceil\sqrt{n}\rceil}{\varepsilon}\right\rceil+2\right)+1.
 \end{aligned}
 \]
 中心阶段数不超过 \(D_2\)，每阶段向量更新数不超过 \(I_2\)。初始化纯化及中心值读取至多 \(Q+1\) 次；每次方向搜索计入试探点、全部网格与纯化，不超过 \(Q+m+3\) 次。一个安全上界是
@@ -465,13 +465,13 @@ D_2\bigl[Q+1+(I_2+1)(Q+m+3)\bigr]. \tag{C3}
 
 ## 附录 D：固定分量常数的维数下界
 
-固定一个最多查询 \(T\) 次、随后输出 \(\widehat x\) 的确定性算法。令起点为原点，并对所有查询返回
+固定一个最多查询 \(T\) 次、随后输出 \(\widehat{x}\) 的确定性算法。令起点为原点，并对所有查询返回
 \[
 \phi(x_t)=g(x_t)=0,\qquad u_t=v_t=0.
 \]
 记录它在这个确定响应下的查询点与输出点。由于 \(n\ge T+3\)，存在两个正交单位向量 \(a,b\)，同时垂直于
 \[
-\operatorname{span}\{x_1,\ldots,x_T,\widehat x\}.
+\operatorname{span}\{x_1,\ldots,x_T,\widehat{x}\}.
 \]
 若算法提前输出，只需使用实际查询点。定义正交投影坐标
 \[
@@ -501,7 +501,7 @@ g(x)&=Q_0(Px).
 
 ### D.2 目标函数下有界且初始间隙为 1
 
-对任意 \(z\in\mathbb R^2\)，有 \(|F_0(z)|\le\|z\|\)。两个坐标同号时，\(F_0\) 是其中一个坐标；异号时 \(F_0=z_1+z_2\)，其平方不超过 \(z_1^2+z_2^2\)。于是记 \(t=\|Px\|\)，
+对任意 \(z\in\mathbb{R}^2\)，有 \(|F_0(z)|\le\|z\|\)。两个坐标同号时，\(F_0\) 是其中一个坐标；异号时 \(F_0=z_1+z_2\)，其平方不超过 \(z_1^2+z_2^2\)。于是记 \(t=\|Px\|\)，
 \[
 F(x)\ge-t+2(t-1)_+\ge-1.
 \]
@@ -517,17 +517,17 @@ F(0)=0,\qquad\inf F=-1,
 \[
 (1,0),\qquad(0,1),\qquad(1,1).
 \]
-在 \(\widehat x\) 的半径 \(r<1\) 邻域内，\(\|Px\|<1\)，径向凸项恒为零。该邻域内全部 Clarke 次梯度都属于
+在 \(\widehat{x}\) 的半径 \(r<1\) 邻域内，\(\|Px\|<1\)，径向凸项恒为零。该邻域内全部 Clarke 次梯度都属于
 \[
 \operatorname{conv}\{a,b,a+b\}.
 \]
-令 \(d=(a+b)/\sqrt2\)，则这些向量都满足
+令 \(d=(a+b)/\sqrt{2}\)，则这些向量都满足
 \[
-\langle q,d\rangle\ge\frac1{\sqrt2}.
+\langle q,d\rangle\ge\frac{1}{\sqrt{2}}.
 \]
 取空间并集与凸包后仍然成立，因此
 \[
-\operatorname{dist}(0,C_r(\widehat x))\ge\frac1{\sqrt2}>\varepsilon.
+\operatorname{dist}(0,C_r(\widehat{x}))\ge\frac{1}{\sqrt{2}}>\varepsilon.
 \]
 定理 3 得证。
 
@@ -562,7 +562,7 @@ F(x)-F(y)
 \]
 舍去非负的 \(\|y-x\|^2\) 项，即题设 K1：
 \[
-\Psi_g(y,v)+\frac\eta2\|u-v\|^2
+\Psi_g(y,v)+\frac{\eta}{2}\|u-v\|^2
 \le F(x)-F(y)+\sigma. \tag{E2}
 \]
 
@@ -570,51 +570,51 @@ F(x)-F(y)
 \[
 \left(
 \sigma,
-\frac\Delta K+\sigma,
-\sqrt{\frac2\eta\left(\frac\Delta K+\sigma\right)}
+\frac{\Delta}{K}+\sigma,
+\sqrt{\frac{2}{\eta}\left(\frac{\Delta}{K}+\sigma\right)}
 \right)
 \]
 的 L0 证书。
 
 ### E.1 基本分量查询的内层实现
 
-由于 \(\|u\|\le G_\phi\)、\(\|v\|\le G_g\)，有 \(\|z-x\|\le\eta B\)。在球 \(\overline B_{\eta B}(x)\) 上，\(M\) 的可取得次梯度范数不超过 \(2B\)，强凸参数为 \(\mu=1/\eta\)。
+由于 \(\|u\|\le G_\phi\)、\(\|v\|\le G_g\)，有 \(\|z-x\|\le\eta B\)。在球 \(\overline{B}_{\eta B}(x)\) 上，\(M\) 的可取得次梯度范数不超过 \(2B\)，强凸参数为 \(\mu=1/\eta\)。
 
 在该球上使用投影次梯度步骤，步长 \(\alpha_t=2/[\mu(t+1)]\)，输出按权重 \(t\) 的平均点。为完整计数，设 \(D_t=\|y_t-z\|^2\)、\(H=2B\)。投影非扩张性及强凸次梯度不等式给出
 \[
 M(y_t)-M(z)
-\le\frac{\mu(t-1)}4D_t-\frac{\mu(t+1)}4D_{t+1}
+\le\frac{\mu(t-1)}{4}D_t-\frac{\mu(t+1)}{4}D_{t+1}
 +\frac{H^2}{\mu(t+1)}.
 \]
 乘以 \(t\) 并求和，距离项望远镜相消，得到
 \[
 \sum_{t=1}^{T}t[M(y_t)-M(z)]\le\frac{TH^2}{\mu}.
 \]
-由凸性，平均点 \(\bar y_T\) 满足
+由凸性，平均点 \(\bar{y}_T\) 满足
 \[
-M(\bar y_T)-M(z)\le\frac{2H^2}{\mu(T+1)}
+M(\bar{y}_T)-M(z)\le\frac{2H^2}{\mu(T+1)}
 =\frac{8\eta B^2}{T+1}. \tag{E3}
 \]
 每次迭代仅需一次普通分量查询，以获得 \(\phi\) 的一个次梯度；当前负侧 \(v\) 维持固定。
 
 取
 \[
-\eta=\frac\delta{\varepsilon^2},\qquad
-\sigma=\frac\delta4,\qquad
+\eta=\frac{\delta}{\varepsilon^2},\qquad
+\sigma=\frac{\delta}{4},\qquad
 K=\max\!\left\{1,\left\lceil\frac{4\Delta}{\delta}\right\rceil\right\},
 \qquad
 T=\left\lceil\frac{32B^2}{\varepsilon^2}\right\rceil,
 \]
 即可达到 \((\delta,\delta,\varepsilon)\)-L0。计入各外层端点函数值查询，总成本为
 \[
-O\!\left[\left(1+\frac\Delta\delta\right)
+O\!\left[\left(1+\frac{\Delta}{\delta}\right)
 \left(1+\frac{B^2}{\varepsilon^2}\right)\right].
 \]
 题设主要项 \(O(\Delta B^2/(\delta\varepsilon^2))\) 在非平凡参数范围成立。这里的 \(u\) 依赖分析中的精确 \(z\)，是存在性见证；此算法没有声称显式输出该 \(u\)。
 
 ## 3. K2–K7 的文献核查
 
-下文 [R1]–[R8] 均为论文原文或出版方页面。自行推导与文献已有结论分别标明。
+下文 [R1]–[R10] 均为论文原文或出版方页面。自行推导与文献已有结论分别标明。
 
 ### K2：Kong–Lewis
 
@@ -651,7 +651,7 @@ T>\left(\frac{L}{32\varepsilon}\right)^{n/2}.
 
 [R3] Theorem 3.1 针对 zero-respecting 一阶算法，包括此约束下的随机算法。其参数范围包含
 \[
-\varepsilon\le c\min\!\left\{L,\frac{rL^2}{\Delta},\frac\Delta r\right\},
+\varepsilon\le c\min\!\left\{L,\frac{rL^2}{\Delta},\frac{\Delta}{r}\right\},
 \]
 维数为 \(\Theta(\Delta L^2/(r\varepsilon^3))\)，下界为
 \[
@@ -681,11 +681,11 @@ u-v=\nabla F.
 
 **自行推导：有限困难实例存在显式 DC 分解。** [R2] Section 4 的未缩放构造可写为
 \[
-\widetilde F(x)=\min_{1\le t\le T}h_t(x),
+\widetilde{F}(x)=\min_{1\le t\le T}h_t(x),
 \]
 其中
 \[
-h_t(x)=\min_{z\in\overline B_\rho(x_t)}
+h_t(x)=\min_{z\in\overline{B}_\rho(x_t)}
 \left\{\langle e_1,z-x_t\rangle+\sigma_K(x-z)\right\}.
 \]
 这里 \(\sigma_K\) 是该文单位球面球冠的支撑函数。由于支撑函数凸且 1-Lipschitz，上式被最小化的函数关于 \((x,z)\) 联合凸；约束球是凸紧集。因此每个 \(h_t\) 都是有限凸、1-Lipschitz 函数。其凸性也可直接用两个极小点的凸组合验证。
@@ -696,14 +696,14 @@ S=\sum_{t=1}^{T}h_t,
 \qquad
 Q=\max_{1\le t\le T}\sum_{j\ne t}h_j.
 \]
-则 \(S,Q\) 凸，\(\widetilde F=S-Q\)，且
+则 \(S,Q\) 凸，\(\widetilde{F}=S-Q\)，且
 \[
 \operatorname{Lip}(S)\le T,
 \qquad\operatorname{Lip}(Q)\le T-1.
 \]
 该文最终截断目标
 \[
-F=\max\{L\widetilde F,-\Delta\}
+F=\max\{L\widetilde{F},-\Delta\}
 \]
 因而具有分解
 \[
@@ -734,8 +734,8 @@ F=\max\{L\widetilde F,-\Delta\}
 | Tian–So，MP 2024，Theorems 1–2、Proposition 4 | 局部 oracle 下界；非凸模依赖的最优性 | 没有直接提供固定分量界且可读取两分量的下界归约。 |
 | Tian–So，SODA 2025，Theorem 5.8、Definition 5.1、Corollary 5.10 | 分段仿射函数的稳健驻点测试 | 明确假设额外的精确驻点测试 oracle；还使用有限表示信息。不是题设普通分量模型。 |
 | Gebken，COAP 2024，Theorem 1 | 弱下半光滑情形下确定性次梯度采样二分的有限终止 | 取得的是目标的真实 Clarke 次梯度；终止论证未给本文参数的统一分量查询界。 |
-| Gebken，JOTA 2025 | 通过 Goldstein 次微分分析局部速度和增长条件 | 所检查的结果没有构造普通分量到 Clarke 信息的有限查询模拟。 |
-| Diakonikolas–Guzmán，arXiv 2403.16317 v2 | 用局部次梯度变化量细化优化复杂度 | 所检查的结果没有覆盖本文这个无附加变化模假设的确定性分量纯化定理。 |
+| Gebken，JOTA 2025，Theorem 5.1 | 通过 Goldstein 次微分分析局部速度和增长条件 | 所检查的结果没有构造普通分量到 Clarke 信息的有限查询模拟。 |
+| Diakonikolas–Guzmán，arXiv 2403.16317 v2，Theorem 4.9 | 用局部次梯度变化量细化优化复杂度 | 所检查的结果没有覆盖本文这个无附加变化模假设的确定性分量纯化定理。 |
 | Kornowski，arXiv 2609.23837、2609.17780，均为 Theorem 3.1 | 一般目标局部指数下界；zero-respecting 精度下界 | 均需要检查函数类和分量信息，不能直接替代本报告的模型证明。 |
 
 这次检查没有找到直接覆盖 B.1、C.4 与 D.1 这一组合结果的定理。此结论仅描述已检查文献；不能当作排他性的新颖性证明。有关定量近似可微性、凸次微分直径与确定性 oracle 模拟的更早文献仍应独立补查。
@@ -784,7 +784,7 @@ q(x)-q(y)-v(x-y)=1>0.
 
 ## 原始文献
 
-[R1] Kong, W.; Lewis, A. S. *The cost of nonconvexity in deterministic nonsmooth optimization*. Mathematical Operations Research 49(4), 2024. Oracle 2.5; Proposition 2.4; Proposition 6.3; Theorem 6.6. 原文：https://arxiv.org/html/2210.00652v2 。出版方：https://pubsonline.informs.org/doi/10.1287/moor.2022.0289 。
+[R1] Kong, W.; Lewis, A. S. *The cost of nonconvexity in deterministic nonsmooth optimization*. Mathematics of Operations Research 49(4), 2024. Oracle 2.5; Proposition 2.4; Proposition 6.3; Theorem 6.6. 原文：https://arxiv.org/html/2210.00652v2 。出版方：https://pubsonline.informs.org/doi/10.1287/moor.2022.0289 。
 
 [R2] Kornowski, G. *The Exponential Price of Determinism in Nonsmooth Nonconvex Optimization*. arXiv:2609.23837v1, 2026. Theorem 3.1; Section 4. 原文：https://arxiv.org/html/2609.23837v1 。
 
